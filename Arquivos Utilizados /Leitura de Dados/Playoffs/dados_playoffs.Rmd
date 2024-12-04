@@ -1,0 +1,69 @@
+---
+title: "Dados Playoffs"
+author: "Rubens Cortelazzi Roncato"
+date: "2024-05-07"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+############ Pacotes que irei utilizar ##################
+library(ggplot2)
+library(tidyverse)
+library(patchwork)
+library(ggplot2)
+library(dplyr)
+library(betareg)
+library(gamlss)
+library(car)
+library(lmtest)
+######### Leitura dos dados ########################
+dados_p <- readxl::read_xlsx("Temporada_NBA.xlsx", sheet = "Playoffs") #Playoffs
+
+dados_playoffs <- dados_p %>% mutate(Posicao = as.integer(Posicao)) %>% 
+  mutate(TEAM = as.factor(TEAM)) %>% 
+  mutate(W = as.integer(W)) %>% 
+  mutate(L = as.integer(L)) %>% 
+  mutate(WINP = as.double(WINP)) %>% 
+  mutate(MIN = as.double(MIN)) %>% 
+  mutate(PTS = as.double(PTS)) %>% 
+  mutate(FGM = as.double(FGM)) %>% 
+  mutate(FGA = as.double(FGA)) %>% 
+  mutate(FGP = as.double(FGP)) %>% 
+  mutate(`3PM` = as.double(`3PM`)) %>% 
+  mutate(`3PA` = as.double(`3PA`)) %>% 
+  mutate(`3PP` = as.double(`3PP`)) %>% 
+  mutate(FTM = as.double(FTM)) %>% 
+  mutate(FTA = as.double(FTA)) %>% 
+  mutate(FTP = as.double(FTP)) %>% 
+  mutate(OREB = as.double(OREB)) %>% 
+  mutate(DREB = as.double(DREB)) %>% 
+  mutate(REB = as.double(REB)) %>% 
+  mutate(AST = as.double(AST)) %>% 
+  mutate(TOV = as.double(TOV)) %>% 
+  mutate(STL = as.double(STL)) %>% 
+  mutate(BLK = as.double(BLK)) %>% 
+  mutate(BLKA = as.double(BLKA)) %>% 
+  mutate(PF = as.double(PF)) %>% 
+  mutate(PFD = as.double(PFD)) %>% 
+  mutate(PlusMinus = as.double(PlusMinus)) %>% 
+  mutate(Temporada = as.character(Temporada)) %>% 
+  mutate(Conferencia = as.character(Conferencia)) %>% 
+  mutate(Numero_temporada = as.factor(Numero_temporada))
+
+######## Regressão Linear Playoffs #############
+
+dados_regressaop <- dados_playoffs %>% dplyr::select(-c(Posicao, GP, W, L, MIN, Temporada, Conferencia))
+dados_regressaop
+
+######## Playoffs transformado ######
+playoffs_transformado <- dados_regressaop %>% 
+  mutate(WINP_transformado = (dados_regressaop$WINP*(240 - 1) + 0.5)/240) %>%
+  dplyr::select(-WINP)
+```
+
