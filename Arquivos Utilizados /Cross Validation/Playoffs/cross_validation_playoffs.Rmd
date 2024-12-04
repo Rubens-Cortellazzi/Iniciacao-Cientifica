@@ -1,0 +1,213 @@
+---
+title: "Cross Validation Playoffs"
+author: "Rubens Cortelazzi Roncato"
+date: "2024-05-07"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+source("dados_playoffs.R")
+
+library(caret)
+set.seed(236292)
+
+#Vamos mudar o nome porque estava dando erro na hora do gamlss
+dados_regressaop$WINP_transformado <- (dados_regressaop$WINP*(240 - 1) + 0.5)/240
+
+#### Cross Validation K Fold #########
+# O processo envolve dividir o conjunto de dados em 5 partes (ou folds) e,
+# em seguida, iterar sobre esses folds. Em cada iteração, um dos folds é usado 
+# como conjunto de teste e os outros folds são usados como conjunto de 
+# treinamento. Essa é a essência da validação cruzada.
+
+#No entanto, ao invés de fazer isso apenas uma vez, o código original executa
+# a validação cruzada 5 vezes (ou seja, 5 iterações externas), o que é 
+# conhecido como "validação cruzada repetida". Cada repetição é essencialmente 
+# uma validação cruzada separada. Isso ajuda a reduzir a variabilidade dos 
+# resultados, fornecendo uma estimativa mais robusta do desempenho do modelo.
+
+
+# Definindo os modelos
+# Primeiro, você define os modelos que deseja avaliar e as métricas de 
+# desempenho que deseja calcular. Os modelos são definidos como uma lista de 
+# objetos de modelo, onde a chave é o nome do modelo e o valor é o modelo 
+# em si. As métricas são definidas como um vetor de strings contendo os nomes 
+# das métricas que você deseja calcular.
+
+# Definindo os modelos
+modelos <- list(
+  "regressao_linearp" = lm(formula = WINP ~ PlusMinus + DREB + TEAM, data = dados_regressaop),
+  "beta_logitop" = betareg(formula = WINP_transformado ~ TEAM + FTP + REB + PlusMinus, data = dados_regressaop),
+  "beta_loglogp" = betareg(formula = WINP_transformado ~ TEAM + REB + PlusMinus, data = dados_regressaop, link = "loglog"),
+  "beta_probitp" = betareg(formula = WINP_transformado ~ TEAM + FTP + REB + PlusMinus, data = dados_regressaop, link = "probit"),
+  "beta_cloglogp" = betareg(formula = WINP_transformado ~ TEAM + FTP + REB + PlusMinus, data = dados_regressaop, link = "cloglog"),
+  "beta_cauchitp" = betareg(formula = WINP_transformado ~ TEAM + FTP + PlusMinus, data = dados_regressaop, link = "cauchit"),
+  "gamlss_betap" = gamlss(formula = WINP ~ TEAM + PF + PlusMinus, family = BEZI, data = dados_regressaop),
+  "misto_normal_teamp" = lmer(formula = WINP ~ (1 | TEAM) + PlusMinus + DREB, data = dados_regressaop),
+  "misto_normal_tempp" = lmer(formula = WINP ~ (1 | Numero_temporada) + PlusMinus + DREB + TEAM, data = dados_regressaop),
+  "misto_beta_teamp" = gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + PF + BLKA + FTP, family = BEZI, data = dados_regressaop),
+  "misto_beta_tempp" = gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + PF + TEAM, family = BEZI, data = dados_regressaop)
+)
+
+# Definindo as métricas
+metricas <- c("R2", "RMSE", "MAE")
+
+# Lista para armazenar os resultados
+resultados <- list()
+
+# Loop para execução da validação cruzada
+for (nome_modelo in names(modelos)) {
+  for (m in metricas) {
+    resultados[[paste(nome_modelo, m, sep = "_")]] <- c()
+  }
+}
+
+# Executando a validação cruzada 5 vezes
+for (i in 1:5) {
+  # Criando os folds para validação cruzada
+  folds <- createFolds(dados_regressaop$WINP, k = 5, returnTrain = TRUE)
+  
+  # Loop para cada fold
+  for (j in 1:length(folds)) {
+    # Dividindo os dados em treino e teste
+    training_index <- folds[[j]]
+    testing_index <- setdiff(seq_len(nrow(dados_regressaop)), training_index)
+    training_data <- dados_regressaop[training_index, ]
+    testing_data <- dados_regressaop[testing_index, ]
+    
+    # Treinando e testando cada modelo
+    for (nome_modelo in names(modelos)) {
+      modelo <- modelos[[nome_modelo]]
+      
+      # Verificando se o modelo utiliza a variável transformada ou não
+      formula_modelo <- formula(modelo)
+      if (is.character(formula_modelo)) {
+        formula_modelo <- as.formula(formula_modelo)
+      }
+      if ("WINP_transformado" %in% all.vars(formula_modelo)) {
+        predict_test <- predict(modelo, newdata = testing_data, type = "response")
+      } else {
+        predict_test <- predict(modelo, newdata = testing_data)
+      }
+      
+      for (m in metricas) {
+        resultados[[paste(nome_modelo, m, sep = "_")]] <- c(resultados[[paste(nome_modelo, m, sep = "_")]], 
+                                                            ifelse(m == "R2", R2(predict_test, testing_data$WINP),
+                                                                   ifelse(m == "RMSE", RMSE(predict_test, testing_data$WINP),
+                                                                          MAE(predict_test, testing_data$WINP))))
+      }
+    }
+  }
+}
+
+# Calculando a média das métricas para cada modelo
+medias_resultados <- list()
+for (nome_modelo in names(modelos)) {
+  for (m in metricas) {
+    medias_resultados[[paste(nome_modelo, m, sep = "_")]] <- mean(resultados[[paste(nome_modelo, m, sep = "_")]])
+  }
+}
+
+# Exibindo as médias das métricas
+print("Médias das métricas para cada modelo:")
+print(medias_resultados)
+
+
+data.frame(Modelo = c("Regressão Linear", "Betareg Logito",
+                      "Betareg loglog","Betareg probito", 
+                      "Betareg cloglog","Betareg Cauchit","Gamlss Beta",
+                      "Misto Normal TEAM","Misto Normal TEMPORADA","Misto Beta TEAM",
+                      "Misto Beta TEMPORADA"),
+           R2 = c(medias_resultados[[1]], medias_resultados[[4]],medias_resultados[[7]],
+                  medias_resultados[[10]], medias_resultados[[13]], medias_resultados[[16]],
+                  medias_resultados[[19]], medias_resultados[[22]],medias_resultados[[25]],
+                  medias_resultados[[28]], medias_resultados[[31]]),
+           RMSE = c(medias_resultados[[2]], medias_resultados[[5]],medias_resultados[[8]],
+                    medias_resultados[[11]], medias_resultados[[14]], medias_resultados[[17]],
+                    medias_resultados[[20]], medias_resultados[[23]],medias_resultados[[26]],
+                    medias_resultados[[29]], medias_resultados[[32]]),
+           MAE = c(medias_resultados[[3]], medias_resultados[[6]],medias_resultados[[9]],
+                   medias_resultados[[12]], medias_resultados[[15]], medias_resultados[[18]],
+                   medias_resultados[[21]], medias_resultados[[24]],medias_resultados[[27]],
+                   medias_resultados[[30]], medias_resultados[[33]])
+)
+
+#Outra forma de Cross Validation, mas não será utilizada 
+#porque apenas faz oara uma amostra só, precisando desenvolver para mais vezes 
+#para ser interessante utilizar.
+
+##### Cross Validation com apenas uma amostra #####
+# R program to implement validation set approach
+
+# setting seed to generate a reproducible random sampling
+set.seed(236292)
+
+# creating training data as 80% of the dataset
+random_sample <- createDataPartition(dados_regressaop$WINP, p = 0.8, list = FALSE)
+
+# generating training dataset from the random_sample
+training_dataset  <- dados_regressaop[random_sample, ]
+
+# generating testing dataset from rows which are not included in random_sample
+testing_dataset <- dados_regressaop[-random_sample, ]
+
+# Building the model
+
+# training the model by assigning sales column as target variable and rest other columns
+# as independent variables
+"regressao_linearp" = lm(formula = WINP ~ PlusMinus + DREB + TEAM, data = training_dataset)
+"beta_logitop" = betareg(formula = WINP_transformado ~ TEAM + FTP + REB + PlusMinus, data = training_dataset)
+"beta_loglogp" = betareg(formula = WINP_transformado ~ TEAM + REB + PlusMinus, data = training_dataset, link = "loglog")
+"beta_probitp" = betareg(formula = WINP_transformado ~ TEAM + FTP + REB + PlusMinus, data = training_dataset, link = "probit")
+"beta_cloglogp" = betareg(formula = WINP_transformado ~ TEAM + FTP + REB + PlusMinus, data = training_dataset, link = "cloglog")
+"beta_cauchitp" = betareg(formula = WINP_transformado ~ TEAM + FTP + PlusMinus, data = training_dataset, link = "cauchit")
+"gamlss_betap" = gamlss(formula = WINP ~ TEAM + PF + PlusMinus, family = BEZI, data = training_dataset)
+"misto_normal_teamp" = lmer(formula = WINP ~ (1 | TEAM) + PlusMinus + DREB, data = training_dataset)
+"misto_normal_tempp" = lmer(formula = WINP ~ (1 | Numero_temporada) + PlusMinus + DREB + TEAM, data = training_dataset)
+"misto_beta_teamp" = gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + PF + BLKA + FTP, family = BEZI, data = training_dataset)
+"misto_beta_tempp" = gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + PF + TEAM, family = BEZI, data = training_dataset)
+
+
+# predicting the target variable
+predictions1 <- predict(regressao_linearp, newdata = testing_dataset)
+predictions3 <- predict(beta_logitop, newdata = testing_dataset)
+predictions4 <- predict(beta_loglogp, newdata = testing_dataset)
+predictions5 <- predict(beta_probitp, newdata = testing_dataset)
+predictions6 <- predict(beta_cloglogp, newdata = testing_dataset)
+predictions7 <- predict(beta_cauchitp, newdata = testing_dataset)
+predictions8 <- predict(gamlss_betap, newdata = testing_dataset)
+predictions9 <- predict(misto_normal_teamp, newdata = testing_dataset)
+predictions10 <- predict(misto_normal_tempp, newdata = testing_dataset)
+predictions11 <- predict(misto_beta_teamp, newdata = testing_dataset)
+predictions12 <- predict(misto_beta_tempp, newdata = testing_dataset)
+
+# computing model performance metrics
+data.frame(Modelo = c("Regressão linear","betareg logito",
+                      "betareg loglog","betareg probito", 
+                      "betareg cloglog","Betareg Cauchit","Gamlss Beta",
+                      "Misto Normal TEAM","Misto Normal TEMPORADA","Misto Beta TEAM",
+                      "Misto Beta TEMPORADA"),
+           R2 = c(R2(predictions1, testing_dataset$WINP),
+                  R2(predictions3, testing_dataset$WINP),R2(predictions4, testing_dataset$WINP),
+                  R2(predictions5, testing_dataset$WINP), R2(predictions6, testing_dataset$WINP),
+                  R2(predictions7, testing_dataset$WINP), R2(predictions8, testing_dataset$WINP),
+                  R2(predictions9, testing_dataset$WINP), R2(predictions10, testing_dataset$WINP),
+                  R2(predictions11, testing_dataset$WINP), R2(predictions12, testing_dataset$WINP)),
+           RMSE = c(RMSE(predictions1, testing_dataset$WINP), 
+                    RMSE(predictions3, testing_dataset$WINP), RMSE(predictions4, testing_dataset$WINP),
+                    RMSE(predictions5, testing_dataset$WINP), RMSE(predictions6, testing_dataset$WINP), 
+                    RMSE(predictions7, testing_dataset$WINP), RMSE(predictions8, testing_dataset$WINP),
+                    RMSE(predictions9, testing_dataset$WINP), RMSE(predictions10, testing_dataset$WINP), 
+                    RMSE(predictions11, testing_dataset$WINP), RMSE(predictions12, testing_dataset$WINP)),
+           MAE = c(MAE(predictions1, testing_dataset$WINP), 
+                   MAE(predictions3, testing_dataset$WINP), MAE(predictions4, testing_dataset$WINP),
+                   MAE(predictions5, testing_dataset$WINP), MAE(predictions6, testing_dataset$WINP),
+                   MAE(predictions7, testing_dataset$WINP), MAE(predictions8, testing_dataset$WINP),
+                   MAE(predictions9, testing_dataset$WINP), MAE(predictions10, testing_dataset$WINP),
+                   MAE(predictions11, testing_dataset$WINP), MAE(predictions12, testing_dataset$WINP)))
+```
