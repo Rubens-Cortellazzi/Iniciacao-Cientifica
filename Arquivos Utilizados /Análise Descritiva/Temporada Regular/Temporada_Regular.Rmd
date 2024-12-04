@@ -1,0 +1,473 @@
+---
+title: "Temporada Regular"
+author: "Rubens Cortelazzi Roncato"
+date: "2024-05-07"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+source("dados_regular.R")
+
+##################### Análise descritiva Temporada Regular ##########################################
+
+#Análise de minimo, maximo, média, mediana, 1 e 3 quartil de todas as variáveis.
+summary(dados_regular)
+
+############# Análise descritiva da variável resposta ##############
+
+#Medidas básicas
+summary((dados_regular$WINP))
+
+#Histograma da Porcentagem de Vitória nas temporadas
+histograma_porcentagem <- dados_regular %>% ggplot(aes(x = WINP)) +
+  geom_histogram(fill = "blue", color = "black") +
+  labs(
+    #title = "Histograma da Porcentagem de Vitória nas temporadas",
+    x = "Porcentagem de Vitórias",
+    y = "Frequência"
+  ) +
+  theme_bw()
+histograma_porcentagem
+
+#Gráfico de pontos com a Porcentagem de vitórias ao decorrer das temporadas
+dados_regular %>% ggplot() +
+  geom_point(aes(x = Temporada, y = WINP)) +
+  theme_bw() +
+  labs(title = "Gráfico de pontos dos times",
+       y = "Porcentagem de vitórias") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Gráfico de pontos com a Porcentagem de vitórias ao decorrer das temporadas por time
+dados_regular %>% 
+  ggplot() +
+  geom_point(aes(x = Temporada, y = WINP, color = TEAM)) +
+  theme_bw() +
+  labs(title = "Gráfico de pontos por times",
+       y = "Porcentagem de vitórias") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Gráfico de Linha com a porcentagem de vitórias de todos os times no decorrer das temporadas.
+dados_regular %>% ggplot(aes(x = Temporada, y = WINP, color = TEAM, group = TEAM)) +
+  geom_line() +
+  labs(title = "Variação das Porcentagens de Vitórias por Time",
+       x = "Temporada",
+       y = "Porcentagem de Vitórias") + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Gráfico de linha com a média de vitória ao decorer das temporadas
+dados_regular %>% dplyr::select(TEAM,Temporada, WINP) %>% group_by(Temporada) %>% summarise(Media = mean(WINP)) %>% 
+  ggplot(aes(x = Temporada, y = Media, group = 1)) +
+  geom_line() +
+  scale_y_continuous(limits = c(0.493, 0.505)) +
+  labs(title = "Média das Porcentagens de Vitórias por Temporada",
+       x = "Temporada",
+       y = "Média das Porcentagens de Vitórias") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Boxplot das porcentagens de vitória nas temporadas
+dados_regular %>% 
+  dplyr::select(WINP) %>% 
+  ggplot() +
+  geom_boxplot(aes(x = WINP), fill = "Orange") +
+  labs(title = "Boxplot das porcentagens de vitória nas temporadas",
+       x = "Porcentagem de vitórias") +
+  theme_bw()
+
+#Boxplot das porcentagens de vitória por temporada
+boxplot_por_temporada <- dados_regular %>% 
+  ggplot() +
+  geom_boxplot(aes(x = WINP, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  labs(x = "Porcentagem de vitórias") + #,title = "Boxplot das porcentagens de vitória por temporada" +
+  theme_bw() 
+boxplot_por_temporada + histograma_porcentagem
+
+#Gráfico de barra com Média das Porcentagens de Vitórias por Temporada
+dados_regular %>% dplyr::select(TEAM,Temporada, WINP) %>% group_by(Temporada) %>% summarise(Media = mean(WINP)) %>%
+  ggplot(aes(x = Temporada, y = Media)) +
+  geom_bar(stat = "identity", fill = "blue") +  # stat = "identity" para usar os valores diretamente
+  labs(title = "Média das Porcentagens de Vitórias por Temporada",
+       x = "Temporada",
+       y = "Média das Porcentagens de Vitórias") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+######## Análise de 3 pontos #############
+
+#Gráfico de linha com a varição das bolas de 3 tentadas durante as tamporadas
+tentadas3r <- dados_regular %>% group_by(Temporada) %>% summarise(chute = mean(`3PA`))  %>% 
+  ggplot(aes(x = Temporada, y = chute, group = 1)) +
+  geom_line() +
+  labs(title = "Tentados de 3 pontos",
+       x = "Temporada",
+       y = "Média de tentativas") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+#Gráfico de linha com a varição das bolas de 3 acertadas durante as tamporadas
+acertadas3r <- dados_regular %>% group_by(Temporada) %>% summarise(chute = mean(`3PM`))  %>% 
+  ggplot(aes(x = Temporada, y = chute, group = 1)) +
+  geom_line() +
+  labs(title = "Acertados de 3 pontos",
+       x = "Temporada",
+       y = "Média de acertos") +
+  theme_bw() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+#Gráfico de linha com a varição da porcentagem de bolas de 3 durante as tamporadas
+porcentagem3r <- dados_regular %>% group_by(Temporada) %>% summarise(chute = mean(`3PP`))  %>% 
+  ggplot(aes(x = Temporada, y = chute, group = 1,xlab="")) +
+  geom_line() +
+  labs(title = "Porcentagem de 3 pontos",
+       x = "Temporada",
+       y = "Porcentagem") +
+  theme_bw() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+(tentadas3r + acertadas3r)/(porcentagem3r)
+
+#Importância das bolas de 3 pontos
+mean((dados_regular$`3PA`)/(dados_regular$FGA)) #0.3016305
+mean((dados_regular$`3PM`)/(dados_regular$FGM)) #0.235065
+mean((dados_regular$FTA)/(dados_regular$FGA)) #0.2728569
+
+###############################################################################
+
+############ Análise com as outras variáveis ####################
+#Gráfico de linha com a Média de pontos por temporada
+pontos_reg <- dados_regular %>% filter(Conferencia == "Oeste") %>% group_by(Temporada) %>% summarise(Media_Pontos = mean(PTS)) %>% 
+  ggplot(aes(x = Temporada, y = Media_Pontos, group = 1)) +
+  geom_line() +
+  labs(title = "Média de pontos na Temporada Regular",
+       x = "Temporada",
+       y = "Média das Porcentagens de Vitórias") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+#pontos_reg + pontos_plyoffs
+
+#Gráfico de linha com a Média de pontos por posição
+dados_regular %>% dplyr::select(TEAM,Posicao, PTS) %>% group_by(Posicao) %>% summarise(Media = mean(PTS)) %>% 
+  ggplot(aes(x = Posicao, y = Media, group = 1)) +
+  geom_line() +
+  #scale_y_continuous(limits = c(0.493, 0.505)) +
+  labs(title = "Média de pontos por posição",
+       x = "Posicao",
+       y = "Média dos pontos") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Boxplot de pontos por temporada
+dados_regular %>% 
+  ggplot() +
+  geom_boxplot(aes(x = PTS, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  theme_bw() 
+
+#Boxplot de porcentagem de arremessos por temporada
+dados_regular %>% 
+  ggplot() +
+  geom_boxplot(aes(x = FGP, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  theme_bw() 
+
+#Boxplot de porcentagem de bolas de 3 pontos por temporada
+dados_regular %>% 
+  ggplot() +
+  geom_boxplot(aes(x = `3PP`, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  theme_bw() 
+
+#Boxplot de porcentagem de arremessos livres por temporada
+dados_regular %>% 
+  ggplot() +
+  geom_boxplot(aes(x = FTP, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  theme_bw() 
+
+#Boxplot de rebotes por temporada
+dados_regular %>% 
+  ggplot() +
+  geom_boxplot(aes(x = REB, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  theme_bw() 
+
+#Boxplot de assitência por temporada
+dados_regular %>% 
+  ggplot() +
+  geom_boxplot(aes(x = AST, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  theme_bw() 
+
+#Boxplot de turnover por temporada
+dados_regular %>% 
+  ggplot() +
+  geom_boxplot(aes(x = TOV, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  theme_bw() 
+
+#Boxplot de roubas de bolas por temporada
+dados_regular %>% 
+  ggplot() +
+  geom_boxplot(aes(x = STL, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  theme_bw() 
+
+#Boxplot de Plus Minus por temporada
+dados_regular %>% 
+  ggplot() +
+  geom_boxplot(aes(x = PlusMinus, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  theme_bw() 
+
+#Boxplot de tocos por temporada
+dados_regular %>% 
+  ggplot() +
+  geom_boxplot(aes(x = BLK, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  theme_bw() 
+
+#Boxplot de faltas sofridas por temporada
+dados_regular %>% 
+  ggplot() +
+  geom_boxplot(aes(x = PFD, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  theme_bw() 
+
+###################### Análise de Correlação #######################
+library(GGally)
+
+#Correlação entre todas as variáveis
+#Rodar apenas se quiser ver alguma coisa em especifico
+#dados_regular %>% dplyr::select(-c(Posicao,TEAM, GP, W, L, MIN, Temporada)) %>%  ggpairs() #Demora para carregar
+
+#Correlação entre porcentagem de vitórias e pontos
+dados_regular %>% dplyr::select(c(WINP, PTS)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e arremessos acertados
+dados_regular %>% dplyr::select(c(WINP, FGM)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e arremessos tentados
+dados_regular %>% dplyr::select(c(WINP, FGA)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e porcentagem arremessos 
+dados_regular %>% dplyr::select(c(WINP, FGP)) %>%  ggpairs() #Correlação relativamente alta (0.606)
+#Correlação entre porcentagem de vitórias e arremessos de 3 pontos acertados
+dados_regular %>% dplyr::select(c(WINP, `3PM`)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e arremessos de 3 pontos tentados
+dados_regular %>% dplyr::select(c(WINP, `3PA`)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e porcentagem de arremessos de 3 pontos
+dados_regular %>% dplyr::select(c(WINP, `3PP`)) %>%  ggpairs()#Correlação relativamente alta (0.542)
+#Correlação entre porcentagem de vitórias e arremessos livres acertados
+dados_regular %>% dplyr::select(c(WINP, FTM)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e arremessos livres tentados
+dados_regular %>% dplyr::select(c(WINP, FTA)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e porcentagem de arremessos livres
+dados_regular %>% dplyr::select(c(WINP, FTP)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e rebotes ofensivos 
+dados_regular %>% dplyr::select(c(WINP, OREB)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e rebotes defensivos
+dados_regular %>% dplyr::select(c(WINP, DREB)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e rebotes
+dados_regular %>% dplyr::select(c(WINP, REB)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e assistencia
+dados_regular %>% dplyr::select(c(WINP, AST)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e turnover
+dados_regular %>% dplyr::select(c(WINP, TOV)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e roubadas de bolas
+dados_regular %>% dplyr::select(c(WINP, STL)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e tocos
+dados_regular %>% dplyr::select(c(WINP, BLK)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e tocos tomados
+dados_regular %>% dplyr::select(c(WINP, BLKA)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e faltas sofridas
+dados_regular %>% dplyr::select(c(WINP, PF)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e faltas feitas
+dados_regular %>% dplyr::select(c(WINP, PFD)) %>%  ggpairs()
+#Correlação entre porcentagem de vitórias e plus minus
+dados_regular %>% dplyr::select(c(WINP, PlusMinus)) %>%  ggpairs() #Correlação muito alta
+cor(dados_regular$WINP,dados_regular$PlusMinus) #0.9657993
+
+#Correlação entre caracteristicas defensivas
+dados_regular %>% dplyr::select(c(WINP, DREB, STL, BLK, PF)) %>%  ggpairs() 
+#Correlação entre caracteristicas ofensivas
+dados_regular %>% dplyr::select(-c(Posicao,TEAM, GP, W, L, MIN, Temporada, DREB, STL, BLK, PF)) %>%  ggpairs()
+# 3PP e PlusMinus correlação 0.548
+# FGP e PlusMinus correlação de 0,607
+# WINP e PlusMinus #Correlação muito alta
+# PFD e FTA correlação de 0,848
+# PFD e FTM correlação de 0,771
+#AST e 3PA correlação 0.585
+#AST e 3PM correlação 0.610
+#AST e PTS correlação 0.720
+#AST e FGA correlação 0.782
+#AST e FGM correlação 0.587
+#AST e FGP correlação 0.577
+#REB e FGM correlação 0.537
+#REB e FGA correlação 0.651
+#REB e PTS correlação 0.543
+# Alta correlação entre FTA e FTM de 0.921
+# 3PP e FGP correlação 0.561
+#PTS e FGM correlação 0.931
+#PTS e FGA correlação 0.774
+#FGM e FGA correlação 0.813
+#PTS e FGP correlação 0.591
+#FGP e FGM correlação 0.658
+#PTS e 3PM correlação 0.836
+#3PM e FGM correlação 0.694
+#3PM e FGA correlação 0.692
+# 3PA e 3PM correlação de 0.987
+#PTS e 3PA correlação 0.815
+#3PA e FGM correlação 0.671
+#3PA e FGA correlação 0.727
+
+################# Análise das conferências ########################
+
+#Média da porcentagem de vitória por conferência
+dados_regular %>% group_by(Conferencia) %>% summarise(Media_conf = mean(WINP))
+
+#Teste t para saber se as médias tem diferença significativa
+t.test(WINP ~ Conferencia, data = dados_regular)
+
+#Summary de cada conferencia de todas as variaveis
+dados_regular %>% filter(Conferencia == "Leste") %>% summary()
+
+dados_regular %>% filter(Conferencia == "Oeste") %>% summary()
+
+#Summary de cada conferencia da variavel resposta
+dados_regular %>% filter(Conferencia == "Leste") %>% dplyr::select(WINP) %>% summary()
+var(dados_regular %>% filter(Conferencia == "Leste") %>% dplyr::select(WINP))
+
+dados_regular %>% filter(Conferencia == "Oeste") %>% dplyr::select(WINP) %>% summary()
+var(dados_regular %>% filter(Conferencia == "Oeste") %>% dplyr::select(WINP))
+
+# Boxplot da porcentagem de vitorias por conferencia
+dados_regular %>% filter(Conferencia == "Leste") %>% dplyr::select(WINP) %>% 
+  ggplot() +
+  geom_boxplot(aes(x = WINP), fill = "Blue")
+
+dados_regular %>% filter(Conferencia == "Oeste") %>% dplyr::select(WINP) %>% 
+  ggplot() +
+  geom_boxplot(aes(x = WINP), fill = "Red")
+
+# Histograma da porcentagem de vitorias por conferencia
+dados_regular %>% filter(Conferencia == "Leste") %>% dplyr::select(WINP) %>% 
+  ggplot() +
+  geom_histogram(aes(x = WINP), fill = "Blue", color = "black")
+
+dados_regular %>% filter(Conferencia == "Oeste") %>% dplyr::select(WINP) %>% 
+  ggplot() +
+  geom_histogram(aes(x = WINP), fill = "Red", color = "black")
+
+######################## Leste #############################
+
+#Gráfico de pontos com a Porcentagem de vitórias ao decorrer das temporadas
+dados_regular %>% filter(Conferencia == "Leste") %>% ggplot() +
+  geom_point(aes(x = Temporada, y = WINP)) +
+  theme_bw() +
+  labs(title = "Gráfico de pontos dos times do Leste",
+       y = "Porcentagem de vitórias") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Gráfico de pontos com a Porcentagem de vitórias ao decorrer das temporadas por time
+dados_regular %>% filter(Conferencia == "Leste") %>%
+  ggplot() +
+  geom_point(aes(x = Temporada, y = WINP, color = TEAM)) +
+  theme_bw() +
+  labs(title = "Gráfico de pontos dos times do Leste",
+       y = "Porcentagem de vitórias") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Gráfico de linha com Variação das Porcentagens de Vitórias por Time do Leste
+dados_regular %>% filter(Conferencia == "Leste") %>% ggplot(aes(x = Temporada, y = WINP, color = TEAM, group = TEAM)) +
+  geom_line() +
+  labs(title = "Porcentagens de Vitórias por Time do Leste",
+       x = "Temporada",
+       y = "Porcentagem de Vitórias") + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Gráfico de linha com Média das Porcentagens de Vitórias por Temporada do Leste
+dados_regular %>% filter(Conferencia == "Leste") %>% dplyr::select(TEAM,Temporada, WINP, Conferencia) %>% group_by(Temporada) %>% summarise(Media = mean(WINP)) %>% 
+  ggplot(aes(x = Temporada, y = Media, group = 1)) +
+  geom_line() +
+  labs(title = "Média das Porcentagens de Vitórias por Temporada do Leste",
+       x = "Temporada",
+       y = "Média das Porcentagens de Vitórias") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Boxplot das porcentagens de vitória nas temporadas do Leste
+dados_regular %>% filter(Conferencia == "Leste") %>%
+  ggplot() +
+  geom_boxplot(aes(x = WINP, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  labs(title = "Boxplot das porcentagens de vitória nas temporadas do Leste",
+       x = "Porcentagem de vitórias") +
+  theme_bw() 
+
+#Gráfico de linha com Média de pontos por Temporada do Leste
+dados_regular %>% filter(Conferencia == "Leste") %>% group_by(Temporada) %>% summarise(Media_Pontos = mean(PTS)) %>% 
+  ggplot(aes(x = Temporada, y = Media_Pontos, group = 1)) +
+  geom_line() +
+  labs(title = "Média de pontos por Temporada do Leste",
+       x = "Temporada",
+       y = "Média de pontos") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Quantidade de vezes que o time do Leste ficou em cada posição
+dados_regular %>% filter(Conferencia == "Leste") %>% count(Posicao)  
+
+######################## Oeste #############################
+
+#Gráfico de pontos com a Porcentagem de vitórias ao decorrer das temporadas
+dados_regular %>% filter(Conferencia == "Oeste") %>% ggplot() +
+  geom_point(aes(x = Temporada, y = WINP)) +
+  theme_bw() +
+  labs(title = "Gráfico de pontos dos times do Oeste",
+       y = "Porcentagem de vitórias") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Gráfico de pontos com a Porcentagem de vitórias ao decorrer das temporadas por time
+dados_regular %>% filter(Conferencia == "Oeste") %>%
+  ggplot() +
+  geom_point(aes(x = Temporada, y = WINP, color = TEAM)) +
+  theme_bw() +
+  labs(title = "Gráfico de pontos dos times do Oeste",
+       y = "Porcentagem de vitórias") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Gráfico de linha com Variação das Porcentagens de Vitórias por Time do Oeste
+dados_regular %>% filter(Conferencia == "Oeste") %>% ggplot(aes(x = Temporada, y = WINP, color = TEAM, group = TEAM)) +
+  geom_line() +
+  labs(title = "Porcentagens de Vitórias do Oeste",
+       x = "Temporada",
+       y = "Porcentagem de Vitórias") + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Gráfico de linhas com Média das Porcentagens de Vitórias por Temporada do Oeste
+dados_regular %>% filter(Conferencia == "Oeste") %>% dplyr::select(TEAM,Temporada, WINP, Conferencia) %>% group_by(Temporada) %>% summarise(Media = mean(WINP)) %>% 
+  ggplot(aes(x = Temporada, y = Media, group = 1)) +
+  geom_line() +
+  labs(title = "Média das Porcentagens de Vitórias por Temporada do Oeste",
+       x = "Temporada",
+       y = "Média das Porcentagens de Vitórias") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Boxplot das porcentagens de vitória nas temporadas do Oeste
+dados_regular %>% filter(Conferencia == "Oeste") %>%
+  ggplot() +
+  geom_boxplot(aes(x = WINP, y = Temporada, fill = Temporada), show.legend = FALSE) +
+  labs(title = "Boxplot das porcentagens de vitória nas temporadas do Oeste",
+       x = "Porcentagem de vitórias") +
+  theme_bw() 
+
+#Gráfico de linha com a Média dae pontos por temporada
+dados_regular %>% filter(Conferencia == "Oeste") %>% group_by(Temporada) %>% summarise(Media_Pontos = mean(PTS)) %>% 
+  ggplot(aes(x = Temporada, y = Media_Pontos, group = 1)) +
+  geom_line() +
+  labs(title = "Média de pontos por Temporada do Oeste",
+       x = "Temporada",
+       y = "Média dae pontos") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotaciona os rótulos em 45 graus
+
+#Quantidade de vezes que o time do oeste ficou em cada posição
+dados_regular %>% filter(Conferencia == "Oeste") %>% count(Posicao)
+```
