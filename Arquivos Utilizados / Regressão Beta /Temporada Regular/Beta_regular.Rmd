@@ -1,0 +1,590 @@
+---
+title: "Beta Regular"
+author: "Rubens Cortelazzi Roncato"
+date: "2024-05-07"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+source("dados_regular.R")
+
+#Probito e logito são as melhores funções de ligação, mas loglog e cloglog até que estão adequadas.
+
+##### Regressão beta sem alterar a função de ligação. (logito) #######
+## Modelo completo ##
+modelo_beta1 <- betareg(WINP ~ .,data = dados_regressao) #Regressão com todos os dados do modelo
+modelo_beta1
+summary(modelo_beta1) #Pseudo R-squared: 0.9351
+coef(modelo_beta1)
+car::Anova(modelo_beta1)
+
+### Modelo com variáveis significantes com alfa = 5% ##
+modelo_beta11 <- betareg(WINP ~ PlusMinus,data = dados_regressao) 
+modelo_beta11
+summary(modelo_beta11) #Pseudo R-squared: 0.9303.
+coef(modelo_beta11)
+car::Anova(modelo_beta11)
+exp((-1)*0.135583) #0.8732067, sendo beta_1 = 0.135583
+
+### Modelo com variáveis significantes com alfa = 10% ###
+modelo_beta12 <- betareg(WINP ~ `3PP` + STL + PF + PlusMinus,data = dados_regressao) 
+modelo_beta12
+summary(modelo_beta12) #Pseudo R-squared: 0.9319 e STL não foi significante
+coef(modelo_beta12)
+car::Anova(modelo_beta12)
+exp((-1)*0.008651) #0.9913863, sendo beta_1 = 0.008651
+exp((-1)*0.133771) #0.8747904, sendo beta_2 = 0.133771
+
+#####Fazendo a regressão beta, mas com loglog ######
+
+### Com todas as variáveis do modelo ###
+modelo_beta2 <- betareg(WINP ~ .,data = dados_regressao, link = "loglog") #Regressão com todos os dados do modelo
+modelo_beta2
+summary(modelo_beta2) #Pseudo R-squared: 0.9276
+coef(modelo_beta2)
+
+### com variáveis significantes com alfa = 5% ###
+modelo_beta21 <- betareg(WINP ~ STL + PF + PlusMinus,data = dados_regressao, link = "loglog") #Regressão com todos os dados do modelo
+modelo_beta21
+summary(modelo_beta21) #Pseudo R-squared: 0.9229
+coef(modelo_beta21)
+
+### com variáveis significantes com alfa = 10%###
+modelo_beta22 <- betareg(WINP ~ FTM + STL + PF + PlusMinus,data = dados_regressao, link = "loglog") #Regressão com todos os dados do modelo
+modelo_beta22
+summary(modelo_beta22) #0.9229
+coef(modelo_beta22)
+
+##### Fazendo a regressão beta, mas com probito #######
+
+### Modelo completo ###
+modelo_beta_probit <- betareg(WINP ~  .,data = dados_regressao, link = "probit")
+modelo_beta_probit
+summary(modelo_beta_probit) #Pseudo R-squared: 0.9303
+coef(modelo_beta_probit)
+
+###  Modelo com 5% ###
+modelo_beta_probit1 <- betareg(WINP ~  PlusMinus,data = dados_regressao, link = "probit")
+modelo_beta_probit1
+summary(modelo_beta_probit1) #Pseudo R-squared: 0.9317
+coef(modelo_beta_probit1)
+
+### Modelo com 10% ###
+modelo_beta_probit2 <- betareg(WINP ~ `3PP` + TOV + STL + PF + PlusMinus,data = dados_regressao, link = "probit")
+modelo_beta_probit2
+summary(modelo_beta_probit2) #Pseudo R-squared: 0.9331
+coef(modelo_beta_probit2)
+
+##### Fazendo a regressão beta, mas com cloglog ####
+
+### Modelo completo ###
+modelo_beta_cloglog <- betareg(WINP ~  .,data = dados_regressao, link = "cloglog")
+modelo_beta_cloglog
+summary(modelo_beta_cloglog) #Pseudo R-squared: 0.9286
+coef(modelo_beta_cloglog)
+
+### Modelo com 5% ###
+modelo_beta_cloglog1 <- betareg(WINP ~  PlusMinus,data = dados_regressao, link = "cloglog")
+modelo_beta_cloglog1
+summary(modelo_beta_cloglog1) #Pseudo R-squared: 0.9242
+coef(modelo_beta_cloglog1)
+
+### Modelo com 10% ###
+modelo_beta_cloglog2 <- betareg(WINP ~ `3PP` + TOV + PlusMinus,data = dados_regressao, link = "cloglog")
+modelo_beta_cloglog2
+summary(modelo_beta_cloglog2) #Pseudo R-squared: 0.9249
+coef(modelo_beta_cloglog2)
+
+##### Fazendo a regressão beta, mas com cauchito ### ######
+### Modelo completo ###
+modelo_beta_cauchit <- betareg(WINP ~  .,data = dados_regressao, link = "cauchit")
+modelo_beta_cauchit
+summary(modelo_beta_cauchit) #Pseudo R-squared: 0.9035
+coef(modelo_beta_cauchit)
+
+### Modelo com significância de 5% ###
+modelo_beta_cauchit1 <- betareg(WINP ~  PlusMinus,data = dados_regressao, link = "cauchit")
+modelo_beta_cauchit1
+summary(modelo_beta_cauchit1) #Pseudo R-squared: 0.8985
+coef(modelo_beta_cauchit1)
+
+############## Análise ANOVA ################
+#### Logito#####
+modelo_beta1 #Completo
+modelo_beta11 #PlusMinus
+modelo_beta12 #`3PP` + STL + PF + PlusMinus
+modelo_beta12_1 <- betareg(WINP ~ PF + PlusMinus, data = dados_regressao)
+modelo_beta12_2 <- betareg(WINP ~ STL + PF + PlusMinus, data = dados_regressao)
+modelo_beta12_3 <- betareg(WINP ~ `3PP` + PF + PlusMinus, data = dados_regressao)
+
+lrtest(modelo_beta11, modelo_beta12_1) #0.02665
+#Colocar PF melhorou o modelo
+
+lrtest(modelo_beta12_1, modelo_beta12_2) #0.8447
+#Colocar STL piorou o modelo
+
+lrtest(modelo_beta12_1, modelo_beta12_3) #0.08035
+#Colocar 3PP melhorou o modelo
+
+lrtest(modelo_beta12_3, modelo_beta12) #0.5643
+#Colocar STL piorou o modelo
+
+#Melhor modelo logito é o modelo com `3PP` + PF + PlusMinus que é modelo_beta12_3.
+
+modelo_beta12_3
+summary(modelo_beta12_3) #Pseudo R-squared: 0.9351
+coef(modelo_beta12_3)
+car::Anova(modelo_beta12_3)
+
+##### loglog #######
+modelo_beta2
+modelo_beta21#STL + PF + PlusMinus
+modelo_beta22#FTM + STL + PF + PlusMinus
+
+lrtest(modelo_beta21, modelo_beta22) #0.9774
+#Colocar FTM piorou o modelo
+
+#Melhor modelo de loglog é o modelo modelo_beta21 com STL + PF + PlusMinus;
+
+##### Probito #######
+modelo_beta_probit
+modelo_beta_probit1 #PlusMinus
+modelo_beta_probit2 #`3PP` + TOV + STL + PF + PlusMinus
+modelo_beta_probit_1 <- betareg(WINP ~ PF + PlusMinus,data = dados_regressao, link = "probit") 
+modelo_beta_probit_2 <- betareg(WINP ~ STL + PF + PlusMinus,data = dados_regressao, link = "probit") 
+modelo_beta_probit_3 <- betareg(WINP ~ TOV + STL + PF + PlusMinus,data = dados_regressao, link = "probit") 
+
+lrtest(modelo_beta_probit1, modelo_beta_probit_1) #0.02108
+#Colocar PF melhorou o modelo
+
+lrtest(modelo_beta_probit_1, modelo_beta_probit_2) #2.2e-16
+#Colocar STL melhorou o modelo
+
+lrtest(modelo_beta_probit_2, modelo_beta_probit_3) #0.07002
+#Colocar TOV melhorou o modelo
+
+lrtest(modelo_beta_probit_3, modelo_beta_probit2) #0.06972
+#Colocar `3PP` melhorou o modelo
+
+#Melhor modelo de probito é modelo_beta_probit2 com `3PP` + TOV + STL + PF + PlusMinus;
+
+#######cloglog####### 
+modelo_beta_cloglog
+modelo_beta_cloglog1 #PlusMinus 
+modelo_beta_cloglog2 #`3PP` + TOV + PlusMinus
+modelo_beta_cloglog_1 <- betareg(WINP ~ TOV + PlusMinus,data = dados_regressao, link = "cloglog")
+
+lrtest(modelo_beta_cloglog1, modelo_beta_cloglog_1) #0.06695
+#TOV melhorou o modelo;
+
+lrtest(modelo_beta_cloglog_1, modelo_beta_cloglog2) #0.129
+#`3PP` piorou o modelo;
+
+#melhor modelo é modelo_beta_cloglog_1 com TOV + PlusMinus
+
+############## Análise de resíduos apenas dos melhores modelos por função de ligação ###################
+########### Logito ##########
+#### Modelo completo logito ###
+plot(modelo_beta1, which = 1, type = "pearson") #Residuos vs indices das observações
+plot(modelo_beta1, which = 2, type = "pearson") #Distância de cook
+plot(modelo_beta1, which = 3, type = "pearson") #alavancagem vs valores preditos
+plot(modelo_beta1, which = 4, type = "pearson") #Residuos vs preditores lineares
+plot(modelo_beta1, which = 5, type = "deviance", sub.caption = "") #QQ plot
+plot(modelo_beta1, which = 1, type = "deviance", sub.caption = "") #Residuos vs indices das observações
+shapiro.test(modelo_beta1$residuals) #p-value = 0.3693, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta1) #p-value = 0.1306
+#Independência
+plot(modelo_beta1$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta1$fitted.values, modelo_beta1$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta1) #p-value = 0.2463, heterocedasticidade
+
+#### Modelo reduzido logito ###
+plot(modelo_beta11, which = 1, type = "pearson")
+plot(modelo_beta11, which = 2, type = "pearson")
+plot(modelo_beta11, which = 3, type = "pearson")
+plot(modelo_beta11, which = 4, type = "pearson")
+plot(modelo_beta11, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta11, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta11$residuals) #p-value = 0.5895, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta11) #p-value = 0.2889
+#Independência
+plot(modelo_beta1$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta1$fitted.values, modelo_beta1$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta11) #p-value = 0.03674, heterocedasticidade
+
+### Modelo 10% logito ###
+plot(modelo_beta12, which = 1, type = "pearson")
+plot(modelo_beta12, which = 2, type = "pearson")
+plot(modelo_beta12, which = 3, type = "pearson")
+plot(modelo_beta12, which = 4, type = "pearson")
+plot(modelo_beta12, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta12, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta12$residuals) #p-value = 0.5895, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta11) #p-value = 0.2889
+#Independência
+plot(modelo_beta1$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta1$fitted.values, modelo_beta1$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta11) #p-value = 0.03674, heterocedasticidade
+
+########### Loglog ########
+### Modelo completo log log ###
+plot(modelo_beta2, which = 1, type = "pearson")
+plot(modelo_beta2, which = 2, type = "pearson")
+plot(modelo_beta2, which = 3, type = "pearson")
+plot(modelo_beta2, which = 4, type = "pearson")
+plot(modelo_beta2, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta2, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta2$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta2) #p-value = 
+#Independência
+plot(modelo_beta2$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta2$fitted.values, modelo_beta2$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta2) #p-value = 
+
+### Modelo 5% loglog ###
+plot(modelo_beta21, which = 1, type = "pearson")
+plot(modelo_beta21, which = 2, type = "pearson")
+plot(modelo_beta21, which = 3, type = "pearson")
+plot(modelo_beta21, which = 4, type = "pearson")
+plot(modelo_beta21, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta21, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta21$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta21) #p-value = 
+#Independência
+plot(modelo_beta21$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta21$fitted.values, modelo_beta21$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta21) #p-value = 
+
+### Modelo 10% loglog ###
+plot(modelo_beta22, which = 1, type = "pearson")
+plot(modelo_beta22, which = 2, type = "pearson")
+plot(modelo_beta22, which = 3, type = "pearson")
+plot(modelo_beta22, which = 4, type = "pearson")
+plot(modelo_beta22, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta22, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta21$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta22) #p-value = 
+#Independência
+plot(modelo_beta22$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta22$fitted.values, modelo_beta22$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta22) #p-value = 
+
+########## Modelos Probito ######
+### Modelo completo probito ###
+plot(modelo_beta_probit, which = 1, type = "pearson")
+plot(modelo_beta_probit, which = 2, type = "pearson")
+plot(modelo_beta_probit, which = 3, type = "pearson")
+plot(modelo_beta_probit, which = 4, type = "pearson")
+plot(modelo_beta_probit, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta_probit, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta_probit$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta_probit) #p-value = 
+#Independência
+plot(modelo_beta_probit$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta_probit$fitted.values, modelo_beta_probit$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta_probit) #p-value = 
+
+### Modelo 5% probito ###
+plot(modelo_beta_probit1, which = 1, type = "pearson")
+plot(modelo_beta_probit1, which = 2, type = "pearson")
+plot(modelo_beta_probit1, which = 3, type = "pearson")
+plot(modelo_beta_probit1, which = 4, type = "pearson")
+plot(modelo_beta_probit1, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta_probit1, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta_probit1$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta_probit1) #p-value = 
+#Independência
+plot(modelo_beta_probit1$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta_probit1$fitted.values, modelo_beta_probit1$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta_probit1) #p-value = 
+
+### Modelo 10% probito ###
+plot(modelo_beta_probit2, which = 1, type = "pearson")
+plot(modelo_beta_probit2, which = 2, type = "pearson")
+plot(modelo_beta_probit2, which = 3, type = "pearson")
+plot(modelo_beta_probit2, which = 4, type = "pearson")
+plot(modelo_beta_probit2, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta_probit2, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta_probit2$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta_probit2) #p-value = 
+#Independência
+plot(modelo_beta_probit2$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta_probit2$fitted.values, modelo_beta_probit2$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta_probit2) #p-value = 
+
+############ Cloglog ##############
+### Modelo completo cloglog ###
+plot(modelo_beta_cloglog, which = 1, type = "pearson")
+plot(modelo_beta_cloglog, which = 2, type = "pearson")
+plot(modelo_beta_cloglog, which = 3, type = "pearson")
+plot(modelo_beta_cloglog, which = 4, type = "pearson")
+plot(modelo_beta_cloglog, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta_cloglog, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta_cloglog$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta_cloglog) #p-value = 
+#Independência
+plot(modelo_beta_cloglog$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta_cloglog$fitted.values, modelo_beta_cloglog$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta_cloglog) #p-value = 
+
+### Modelo 5% cloglog ###
+plot(modelo_beta_cloglog1, which = 1, type = "pearson")
+plot(modelo_beta_cloglog1, which = 2, type = "pearson")
+plot(modelo_beta_cloglog1, which = 3, type = "pearson")
+plot(modelo_beta_cloglog1, which = 4, type = "pearson")
+plot(modelo_beta_cloglog1, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta_cloglog1, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta_cloglog1$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta_cloglog1) #p-value = 
+#Independência
+plot(modelo_beta_cloglog1$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta_cloglog1$fitted.values, modelo_beta_cloglog1$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta_cloglog1) #p-value =
+
+### Modelo 10% cloglog ###
+plot(modelo_beta_cloglog2, which = 1, type = "pearson")
+plot(modelo_beta_cloglog2, which = 2, type = "pearson")
+plot(modelo_beta_cloglog2, which = 3, type = "pearson")
+plot(modelo_beta_cloglog2, which = 4, type = "pearson")
+plot(modelo_beta_cloglog2, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta_cloglog2, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta_cloglog2$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta_cloglog2) #p-value = 
+#Independência
+plot(modelo_beta_cloglog2$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta_cloglog2$fitted.values, modelo_beta_cloglog2$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta_cloglog2) #p-value =
+
+############# Cauchit #######################
+### Modelo completo cauchit ###
+plot(modelo_beta_cauchit, which = 1, type = "pearson")
+plot(modelo_beta_cauchit, which = 2, type = "pearson")
+plot(modelo_beta_cauchit, which = 3, type = "pearson")
+plot(modelo_beta_cauchit, which = 4, type = "pearson")
+plot(modelo_beta_cauchit, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta_cauchit, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta_cauchit$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta_cauchit) #p-value = 
+#Independência
+plot(modelo_beta_cauchit$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta_cauchit$fitted.values, modelo_beta_cauchit$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta_cauchit) #p-value =
+
+### Modelo 5% cauchit ###
+plot(modelo_beta_cauchit1, which = 1, type = "pearson")
+plot(modelo_beta_cauchit1, which = 2, type = "pearson")
+plot(modelo_beta_cauchit1, which = 3, type = "pearson")
+plot(modelo_beta_cauchit1, which = 4, type = "pearson")
+plot(modelo_beta_cauchit1, which = 5, type = "deviance", sub.caption = "")
+plot(modelo_beta_cauchit1, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(modelo_beta_cauchit1$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_beta_cauchit1) #p-value = 
+#Independência
+plot(modelo_beta_cauchit1$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_beta_cauchit1$fitted.values, modelo_beta_cauchit1$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_beta_cauchit1) #p-value =
+
+
+```
