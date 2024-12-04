@@ -1,0 +1,337 @@
+source("dados_regular.R")
+
+library(gamlss)
+#Referencia: https://rdrr.io/cran/gamlss/man/random.html
+
+##### Testagem da significância dos modelos mistos ####
+misto_normal_vazio <- gamlss(WINP ~ 1 + re(random=~1|TEAM), data = dados_regressao, family = NO)
+modelo_gamlss_nada <- gamlss(WINP ~ 1, data = dados_regressao, family = NO)
+lrtest(modelo_gamlss_nada, misto_normal_vazio) #2.315e-11, modelo misto foi significante
+
+misto_normal_vazio_Temp <- gamlss(WINP ~ 1 + re(random=~1|Numero_temporada), data = dados_regressao, family = NO)
+misto_normal_nada_Temp <- gamlss(WINP ~ 1 , data = dados_regressao, family = NO)
+lrtest(misto_normal_nada_Temp, misto_normal_vazio_Temp) #p valor de 1, O modelo misto não foi significante
+
+misto_normal_vaziob <- gamlss(WINP ~ 1 + re(random=~1|TEAM), data = dados_regressao, family = BE)
+modelo_gamlss_nadab <- gamlss(WINP ~ 1, data = dados_regressao, family = BE)
+lrtest(modelo_gamlss_nadab, misto_normal_vaziob) #6.798e-11, modelo misto foi significante
+
+misto_normal_vazio_Tempb <- gamlss(WINP ~ 1 + re(random=~1|Numero_temporada), data = dados_regressao, family = BE)
+misto_normal_nada_Tempb <- gamlss(WINP ~ 1 , data = dados_regressao, family = BE)
+lrtest(misto_normal_nada_Tempb, misto_normal_vazio_Tempb) #p valor de 1, O modelo misto não foi significante
+
+########### Modelos Mistos GAMLSS ##########
+#### Normal ####
+##### Modelo Completo TEAM ####
+misto_normal_completo <- gamlss(WINP ~ . + re(random=~1|TEAM), data = dados_regressao, family = NO)
+summary(misto_normal_completo)
+coef(misto_normal_completo)
+getSmo(misto_normal_completo)
+
+######Modelo 10% #####
+misto_normal1 <- gamlss(WINP ~ FTM + FTA + OREB + DREB + TOV + STL + PlusMinus + re(random=~1|TEAM), data = dados_regressao, family = NO)
+summary(misto_normal1)
+coef(misto_normal1)
+getSmo(misto_normal1)
+
+##### Backward ##### 
+misto_normal_completo 
+misto_normal_vazio <- gamlss(WINP ~ 1 + re(random=~1|TEAM), data = dados_regressao, family = NO)
+step(misto_normal_completo, scope=list(upper=misto_normal_completo, lower=misto_normal_vazio), direction='backward', trace=TRUE)
+
+misto_normal_back <- gamlss(formula = WINP ~ PTS + FGP + `3PA` + `3PP` +  
+                              FTM + FTA + FTP + OREB + DREB + TOV + STL +  
+                              PFD + PlusMinus + (re(random = ~1 | TEAM)), family = NO,  
+                            data = dados_regressao) 
+
+##### Forward ####
+step(misto_normal_vazio, scope=list(upper=misto_normal_completo, lower=misto_normal_vazio), direction='forward', trace=TRUE)
+
+misto_normal_forw <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) +  
+                              PlusMinus + OREB + PF + `3PA` + FGP, family = NO,  
+                            data = dados_regressao) 
+
+
+##### Anova #####
+misto_normal1 #FTM + FTA + OREB + DREB + TOV + STL + PlusMinus + re(random=~1|TEAM)
+misto_normal_back# PTS + FGP + `3PA` + `3PP` + FTM + FTA + FTP + OREB + DREB + TOV + STL + PFD + PlusMinus + (re(random = ~1 | TEAM))
+misto_normal_forw #(re(random = ~1 | TEAM)) + PlusMinus + OREB + PF + `3PA` + FGP
+misto_normal0 <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)), family = NO, data = dados_regressao) 
+sem_misto_normal0 <- gamlss(formula = WINP ~ 1, family = NO, data = dados_regressao) 
+misto_normal_plus <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus, family = NO, data = dados_regressao) 
+misto_normal_oreb <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB, family = NO, data = dados_regressao) 
+misto_normal_pf <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF, family = NO, data = dados_regressao) 
+misto_normal_3pa <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF +`3PA`, family = NO, data = dados_regressao) 
+misto_normal_fgp <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF +`3PA` + FGP, family = NO, data = dados_regressao) 
+misto_normal_pts <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF +`3PA` + PTS, family = NO, data = dados_regressao) 
+misto_normal_3pp <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF +`3PA` + `3PP`, family = NO, data = dados_regressao) 
+misto_normal_ftm <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF +`3PA` + FTM, family = NO, data = dados_regressao) 
+misto_normal_fta <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF +`3PA` + FTA, family = NO, data = dados_regressao) 
+misto_normal_ftp <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF +`3PA` + FTP, family = NO, data = dados_regressao) 
+misto_normal_dreb <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF +`3PA` + DREB, family = NO, data = dados_regressao) 
+misto_normal_tov <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF +`3PA` + TOV, family = NO, data = dados_regressao) 
+misto_normal_stl <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF +`3PA` + STL, family = NO, data = dados_regressao) 
+misto_normal_pfd <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF +`3PA` + PFD, family = NO, data = dados_regressao) 
+
+lrtest(sem_misto_normal0, misto_normal0) #4.067e-11, efeito aleatório significante
+lrtest(misto_normal0, misto_normal_plus) #2.2e-16, plus minus significante
+lrtest(misto_normal_plus, misto_normal_oreb) #0.04309, OREB significante
+lrtest(misto_normal_oreb, misto_normal_pf) #2.2e-16, PF significante
+lrtest(misto_normal_pf, misto_normal_3pa) #0.08583, 3pa significante
+lrtest(misto_normal_3pa, misto_normal_fgp) #0.1121, FGP não significante
+lrtest(misto_normal_3pa, misto_normal_pts) # 0.425, PTS não significante
+lrtest(misto_normal_3pa, misto_normal_3pp) # 0.1601, 3PP não significante
+lrtest(misto_normal_3pa, misto_normal_ftm) # 0.7802, FTM não significante
+lrtest(misto_normal_3pa, misto_normal_fta) # 0.8302, FTA não significante
+lrtest(misto_normal_3pa, misto_normal_ftp) # 0.4087, FTP não significante
+lrtest(misto_normal_3pa, misto_normal_dreb) # 0.9353, DREB não significante
+lrtest(misto_normal_3pa, misto_normal_tov) # 0.8433, TOV não significante
+lrtest(misto_normal_3pa, misto_normal_stl) # 0.4685, STL não significante
+lrtest(misto_normal_3pa, misto_normal_pfd) # 0.591, PFD não significante
+#Melhor modelo misto_normal_3pa com (re(random = ~1 | TEAM)) + PlusMinus + OREB + PF + `3PA`
+
+##### Modelo Completo Temporada ####
+misto_normal_completo_temp <- gamlss(WINP ~ TEAM + WINP + PTS +
+                                       FGM + FGA + FGP + `3PM` +
+                                       `3PA` + `3PP` + FTM + FTA +
+                                       FTP + OREB + DREB + REB +
+                                       AST + TOV + STL + BLK + BLKA +
+                                       PF + PFD + PlusMinus + re(random=~1|Numero_temporada), 
+                                     data = dados_regressao, family = NO)
+summary(misto_normal_completo_temp)
+coef(misto_normal_completo_temp)
+getSmo(misto_normal_completo_temp)
+
+##### Backward Temp##### 
+misto_normal_completo_temp 
+misto_normal_vazio_temp <- gamlss(WINP ~ 1 + re(random=~1|Numero_temporada), data = dados_regressao, family = NO)
+step(misto_normal_completo_temp, scope=list(upper=misto_normal_completo_temp, lower=misto_normal_vazio_temp), direction='backward', trace=TRUE)
+
+misto_normal_back_temp <- gamlss(formula = WINP ~ TEAM + PTS + FGP + `3PM` +  
+                                   FTM + FTA + FTP + OREB + DREB + TOV + STL + PFD +  
+                                   PlusMinus + (re(random = ~1 | Numero_temporada)),  
+                                 family = NO, data = dados_regressao)   
+
+##### Forward Temp####
+step(misto_normal_vazio_temp, scope=list(upper=misto_normal_completo_temp, lower=misto_normal_vazio_temp), direction='forward', trace=TRUE)
+
+misto_normal_forw_temp <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) +  
+                                   PlusMinus + PF + FGP + FGM, family = NO, data = dados_regressao)
+
+##### Anova ####
+misto_normal_back_temp #gamlss(TEAM + PTS + FGP + `3PM` + FTM + FTA + FTP + OREB + DREB + TOV + STL + PFD + PlusMinus + (re(random = ~1 | Numero_temporada))
+misto_normal_forw_temp #(re(random = ~1 | Numero_temporada)) + PlusMinus + PF + FGP + FGM
+misto_normal_temp0 <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)), family = NO, data = dados_regressao) 
+sem_misto_normal_temp0 <- gamlss(formula = WINP ~ 1, family = NO, data = dados_regressao) 
+misto_normal_temp_plus <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus, family = NO, data = dados_regressao) 
+misto_normal_temp_fgp <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + FGP, family = NO, data = dados_regressao) 
+misto_normal_temp_pf <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + FGP + PF, family = NO, data = dados_regressao) 
+misto_normal_temp_fgm <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + FGP + PF + FGM, family = NO, data = dados_regressao) 
+misto_normal_temp_pts <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + FGP + PF + FGM + PTS, family = NO, data = dados_regressao) 
+misto_normal_temp_pts1 <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + FGP + PTS, family = NO, data = dados_regressao) 
+misto_normal_temp_3pm <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + FGP + PTS + `3PM`, family = NO, data = dados_regressao) 
+misto_normal_temp_ftm <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + FGP + PTS + FTM, family = NO, data = dados_regressao) 
+misto_normal_temp_dreb <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + FGP + PTS + DREB, family = NO, data = dados_regressao) 
+misto_normal_temp_tov <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + FGP + PTS + TOV, family = NO, data = dados_regressao) 
+misto_normal_temp_stl <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + FGP + PTS + STL, family = NO, data = dados_regressao) 
+misto_normal_temp_team <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + FGP + PF + FGM + TEAM, family = NO, data = dados_regressao) 
+
+lrtest(sem_misto_normal_temp0, misto_normal_temp0) #Temporada não foi significativo
+lrtest(misto_normal_temp0, misto_normal_temp_plus) #2.2e-16, plus minus foi significativo
+lrtest(misto_normal_temp_plus, misto_normal_temp_fgp) # 0.0382, fgp foi significativo
+lrtest(misto_normal_temp_fgp, misto_normal_temp_pf) # 0.01043, pf foi significativo
+lrtest(misto_normal_temp_pf, misto_normal_temp_fgm) # 0.02268, fgm foi significativo
+lrtest(misto_normal_temp_fgm, misto_normal_temp_pts) # 0.95, pts foi significativo
+lrtest(misto_normal_temp_fgp, misto_normal_temp_pts1) # 0.03297, pts foi significativo
+lrtest(misto_normal_temp_pts1, misto_normal_temp_3pm) # 0.1964, 3pm não foi significativo
+lrtest(misto_normal_temp_pts1, misto_normal_temp_ftm) # 0.6204, ftm não foi significativo
+lrtest(misto_normal_temp_pts1, misto_normal_temp_dreb) #0.103,dreb não foi significativo
+lrtest(misto_normal_temp_pts1, misto_normal_temp_tov) #0.2214,tov não foi significativo
+lrtest(misto_normal_temp_pts1, misto_normal_temp_stl) #0.8112,stl não foi significativo
+lrtest(misto_normal_temp_fgm, misto_normal_temp_team)
+#Não foi significante porém fazendo o cross validation identificamos que foi significante o forward.
+#Então o melhor modelo é misto_normal_temp_fgm com (re(random = ~1 | Numero_temporada)) + PlusMinus + FGP + PF + FGM + TEAM
+#que é o forward
+
+#### Beta ####
+##### Modelo Completo TEAM ####
+misto_beta_completo <- gamlss(WINP ~ . + re(random=~1|TEAM), data = dados_regressao, family = BE)
+summary(misto_beta_completo)
+coef(misto_beta_completo)
+getSmo(misto_beta_completo)
+
+##### Backward TEAM ##### 
+misto_beta_completo 
+misto_beta_vazio <- gamlss(WINP ~ 1 + re(random=~1|TEAM), data = dados_regressao, family = BE)
+step(misto_beta_completo, scope=list(upper=misto_beta_completo, lower=misto_beta_vazio), direction='backward', trace=TRUE)
+
+misto_beta_back <- gamlss(formula = WINP ~ PTS + FGP + `3PP` + DREB +  
+                            TOV + STL + PlusMinus + (re(random = ~1 | TEAM)),  
+                          family = BE, data = dados_regressao) 
+
+##### Forward TEAM ####
+step(misto_beta_vazio, scope=list(upper=misto_beta_completo, lower=misto_beta_vazio), direction='forward', trace=TRUE)
+
+misto_beta_forw <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) +  
+                            PlusMinus + FGP + PTS + PF, family = BE, data = dados_regressao) 
+
+##### Anova #####
+misto_beta_back #PTS + FGP + `3PP` + DREB + TOV + STL + PlusMinus + (re(random = ~1 | TEAM))
+misto_beta_forw #(re(random = ~1 | TEAM)) + PlusMinus + FGP + PTS + PF
+misto_beta0 <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)), family = BE, data = dados_regressao) 
+sem_misto_beta0 <- gamlss(formula = WINP ~ 1, family = BE, data = dados_regressao) 
+misto_beta_plus <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus, family = BE, data = dados_regressao) 
+misto_beta_fgp <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + FGP, family = BE, data = dados_regressao) 
+misto_beta_pts<- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + FGP + PTS, family = BE, data = dados_regressao) 
+misto_beta_pf<- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + FGP + PTS + PF, family = BE, data = dados_regressao) 
+misto_beta_3pp <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + FGP + PTS + PF + `3PP`, family = BE, data = dados_regressao) 
+misto_beta_3pp1 <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + FGP + PTS + `3PP`, family = BE, data = dados_regressao) 
+misto_beta_dreb<- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + FGP + PTS + PF + DREB, family = BE, data = dados_regressao) 
+misto_beta_tov<- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + FGP + PTS + PF + TOV, family = BE, data = dados_regressao) 
+misto_beta_stl<- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) + PlusMinus + FGP + PTS + PF + STL, family = BE, data = dados_regressao) 
+
+lrtest(sem_misto_beta0, misto_beta0) #5.757e-11, efeito aleatório significante
+lrtest(misto_beta0, misto_beta_plus) # 2.2e-16, plus minus significante
+lrtest(misto_beta_plus, misto_beta_fgp) # 0.02532, fgp significante
+lrtest(misto_beta_fgp, misto_beta_pts) # 0.03276, pts significante
+lrtest(misto_beta_pts, misto_beta_pf) # 2.2e-16, pf significante
+lrtest(misto_beta_pf, misto_beta_3pp) # 0.1472, 3PP não significante
+lrtest(misto_beta_pts,misto_beta_3pp1)# 0.1883, 3PP não significante com PF fora do modelo também
+lrtest(misto_beta_pf, misto_beta_dreb) # 0.4275, dreb não significante
+lrtest(misto_beta_pf, misto_beta_tov) # 0.3107, tov não significante
+lrtest(misto_beta_pf, misto_beta_stl) # 0.423, stlnão significante
+#Melhor modelo misto_beta_pf com (re(random = ~1 | TEAM)) + PlusMinus + FGP + PTS + PF
+##### Modelo Completo Temporada ####
+misto_beta_completo_temp <- gamlss(WINP ~ . + re(random=~1|Numero_temporada), data = dados_regressao, family = BE)
+summary(misto_beta_completo_temp)
+coef(misto_beta_completo_temp)
+getSmo(misto_beta_completo_temp)
+##### Backward Temp ##### 
+misto_beta_completo_temp 
+misto_beta_vazio_temp <- gamlss(WINP ~ 1 + re(random=~1|Numero_temporada), data = dados_regressao, family = BE)
+step(misto_beta_completo_temp, scope=list(upper=misto_beta_completo_temp, lower=misto_beta_vazio_temp), direction='backward', trace=TRUE)
+
+misto_beta_back_temp <- gamlss(formula = WINP ~ PTS + FGA + FGP + `3PA` + `3PP` +  
+                                 FTM + PF + PlusMinus + (re(random = ~1 | Numero_temporada)),  
+                               family = BE, data = dados_regressao)   
+
+##### Forward Temp ####
+step(misto_beta_vazio_temp, scope=list(upper=misto_beta_completo_temp, lower=misto_beta_vazio_temp), direction='forward', trace=TRUE)
+
+misto_beta_forw_temp <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) +  
+                                 PlusMinus + FGP + PTS + PF, family = BE, data = dados_regressao) 
+
+##### Anova ####
+misto_beta_back_temp # PTS + FGA + FGP + `3PA` + `3PP` + FTM + PF + PlusMinus + (re(random = ~1 | Numero_temporada))
+misto_beta_forw_temp #(re(random = ~1 | Numero_temporada)) + PlusMinus + FGP + PTS + PF
+misto_beta_temp0 <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)), family = BE, data = dados_regressao) 
+sem_misto_beta_temp0 <- gamlss(formula = WINP ~ 1, family = BE, data = dados_regressao) 
+misto_beta_temp_plus <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus, family = BE, data = dados_regressao) 
+misto_beta_temp_pf <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + PF, family = BE, data = dados_regressao) 
+misto_beta_temp_pts <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + PF + PTS, family = BE, data = dados_regressao) 
+misto_beta_temp_fgp <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + PF + FGP, family = BE, data = dados_regressao) 
+misto_beta_temp_fga <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + PF + FGP + FGA, family = BE, data = dados_regressao) 
+misto_beta_temp_ftm <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + PF + FGP + FGA + FTM, family = BE, data = dados_regressao) 
+misto_beta_temp_3pp <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + PF + FGP + FGA + `3PP`, family = BE, data = dados_regressao) 
+misto_beta_temp_3pa <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) + PlusMinus + PF + FGP + FGA + `3PA`, family = BE, data = dados_regressao) 
+
+lrtest(sem_misto_beta_temp0, misto_beta_temp0)#Numero temporada não significante
+lrtest(misto_beta_temp0, misto_beta_temp_plus)#2.2e-16 plus minus significante
+lrtest(misto_beta_temp_plus, misto_beta_temp_pf)#0.02665 pf significante
+lrtest(misto_beta_temp_pf, misto_beta_temp_pts)#0.5488 pts não significante
+lrtest(misto_beta_temp_pf, misto_beta_temp_fgp)#0.0168 pts significante
+lrtest(misto_beta_temp_fgp, misto_beta_temp_fga)#0.03197 fga significante
+lrtest(misto_beta_temp_fga, misto_beta_temp_ftm)#0.5331 ftm significante
+lrtest(misto_beta_temp_fga, misto_beta_temp_3pp)#0.3442 3pp significante
+lrtest(misto_beta_temp_fga, misto_beta_temp_3pa)#0.8422 3pa significante
+#Melhor modelo misto_beta_temp_fga foi o melhor modelo (re(random = ~1 | Numero_temporada)) + PlusMinus + PF + FGP + FGA
+
+########### Outras formas de fazer o gamlss ####
+
+#Essas duas funções dão certo e apresentam os mesmos resultados
+analise4 <- gamlss::gamlss(WINP ~ . + random(TEAM), data = dados_regressao, family = BE, method = mixed())
+analise5 <- gamlss::gamlss(WINP ~ . + random(TEAM), data = dados_regressao, family = BE)
+
+# use re() with fixed effect within re() ## DEMORA MAIS PARA RODAR
+t2<-gamlss(WINP ~ re(fixed=~., random=~1|TEAM), data = dados_regressao, family = BE)
+
+#Essa próxima função tem os mesmos resultados que a analise4 e analise5
+# use re() with fixed effect in gamlss formula
+t3 <- gamlss(WINP ~ . + re(random=~1|TEAM), data = dados_regressao, family = BE)
+######### Utilizando GLM, pois normal foi melhor do que beta no gamlss#####
+
+#Melhor modelo do gamlss para normal:
+#(re(random = ~1 | TEAM)) + PlusMinus + OREB + PF + `3PA`
+
+#Pacote que será utilizado
+library(lme4)
+
+#Modelos encontrados no gamlss para tomar como base para o glm
+misto_normal1 #FTM + FTA + OREB + DREB + TOV + STL + PlusMinus + re(random=~1|TEAM)
+misto_normal_back# PTS + FGP + `3PA` + `3PP` + FTM + FTA + FTP + OREB + DREB + TOV + STL + PFD + PlusMinus + (re(random = ~1 | TEAM))
+misto_normal_forw #(re(random = ~1 | TEAM)) + PlusMinus + OREB + PF + `3PA` + FGP
+
+## Anova ##
+glm_completo <- lmer(WINP ~ . + (1|TEAM), data = dados_regressao)
+glm_vazio <- lmer(WINP ~ (1|TEAM), data = dados_regressao)
+glm_nada <- lm(WINP ~ 1, data = dados_regressao)
+glm_plus <- lmer(WINP ~ PlusMinus + (1|TEAM), data = dados_regressao)
+glm_pf <- lmer(WINP ~ PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_oreb <- lmer(WINP ~ OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_3pa <- lmer(WINP ~ `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_fgp <- lmer(WINP ~ FGP + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_pfd <- lmer(WINP ~ PFD + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_stl <- lmer(WINP ~ STL + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_tov <- lmer(WINP ~ TOV + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_blk <- lmer(WINP ~ BLK + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_blka <- lmer(WINP ~ BLKA + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_ast <- lmer(WINP ~ AST + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_reb <- lmer(WINP ~ REB + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_dreb <- lmer(WINP ~ DREB + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_ftp <- lmer(WINP ~ FTP + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_fta <- lmer(WINP ~ FTM + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_ftm <- lmer(WINP ~ FTP + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_3pp <- lmer(WINP ~ `3PP` + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_3pm <- lmer(WINP ~ `3PM` + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_fga <- lmer(WINP ~ FGA + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_fgm <- lmer(WINP ~ FGM + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+glm_pts <- lmer(WINP ~ PTS + `3PA` + OREB + PF + PlusMinus + (1|TEAM), data = dados_regressao)
+
+anova(glm_nada, glm_vazio) #Modelo misto significante
+anova(glm_vazio, glm_plus) #PlusMinus significante
+anova(glm_plus, glm_pf) #Pf significante
+anova(glm_pf, glm_oreb) #OREB significante
+anova(glm_oreb, glm_3pa) #3pa significante
+anova(glm_3pa, glm_fgp) #FGP não significante
+anova(glm_3pa, glm_pfd) #Pfd não significante
+anova(glm_3pa, glm_stl) #stl não significante
+anova(glm_3pa, glm_tov) #tov não significante
+anova(glm_3pa, glm_blk) #blk não significante
+anova(glm_3pa, glm_blka) #blka não significante
+anova(glm_3pa, glm_ast) #ast não significante
+anova(glm_3pa, glm_reb) #reb não significante
+anova(glm_3pa, glm_dreb) #dreb não significante
+anova(glm_3pa, glm_ftp) #ftp não significante
+anova(glm_3pa, glm_fta) #fta não significante
+anova(glm_3pa, glm_ftm) #ftm não significante
+anova(glm_3pa, glm_3pp) #3pp não significante
+anova(glm_3pa, glm_3pm) #3pm não significante
+anova(glm_3pa, glm_fga) #fga não significante
+anova(glm_3pa, glm_fgm) #fgm não significante
+anova(glm_3pa, glm_pts) #pts não significante
+
+#Melhor modelo é glm_3pa com `3PA` + OREB + PF + PlusMinus + (1 | TEAM)
+#Assim, notamos que é o mesmo modelo do que o gamlss normal.
+#Assim, iremos utilizar o glm ao invés do gamlss.
+
+#Pegamos o mesmo modelo escolhido pelo gamlss
+glm_melhor <- lmer(WINP ~ PlusMinus + OREB + PF + `3PA` + (1|TEAM), data = dados_regressao)
+summary(glm_melhor)
+anova(glm_melhor)
+coef(glm_melhor)
+
+#Assim, como notamos que para team o gamlss e lmer foram os mesmos modelos,
+#vamos adotar que para numero de temporada também é a mesma.
+#Assim,(1 | Numero_temporada) + PlusMinus + FGP + PF + FGM + TEAM
+#é o melhor modelo.
+glm_melhor_temp <- lmer(WINP ~ PlusMinus + FGP + PF + FGM + TEAM + (1|Numero_temporada), data = dados_regressao)
