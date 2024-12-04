@@ -1,0 +1,352 @@
+---
+title: "Regressão Playoffs"
+author: "Rubens Cortelazzi Roncato"
+date: "2024-05-07"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+source("dados_playoffs.R")
+
+##### Regressão com todos os dados do modelo #########
+modelop1 <- lm(WINP ~ .,data = dados_regressaop) 
+modelop1
+coef(modelop1)
+anova(modelop1)
+summary(modelop1)
+
+###### Regressão com as variáveis que foram significaivas com alfa = 5% #####
+modelop2 <- lm(WINP ~ PTS + FGM + `3PM` + FTM + PlusMinus,data = dados_regressaop) 
+modelop2
+coef(modelop2)
+anova(modelop2) #FGM não foi significativo
+summary(modelop2) #Adjusted R-squared:  0.7442 
+
+##### Regressão com as variáveis que foram significativas com alfa = 5% sem FGM #######
+modelop3 <- lm(WINP ~ PTS + `3PM` + FTM + PlusMinus,data = dados_regressaop) 
+modelop3
+coef(modelop3)
+anova(modelop3) #FTM não foi significativo
+summary(modelop3) #Adjusted R-squared:  0.7357 
+
+##### Regressão com as variáveis que foram significaivas com alfa = 10% ######
+modelop4 <- lm(WINP ~ PTS + FGM + `3PM` + FTM + OREB + DREB + REB + PF + PlusMinus,data = dados_regressaop) 
+modelop4
+coef(modelop4)
+anova(modelop4) 
+summary(modelop4) #Adjusted R-squared: 0.7484 e PF não deu significante  
+
+#### Regressão com as variáveis que foram significaivas com alfa = 10% sem PF ####
+modelop5 <- lm(WINP ~ PTS + FGM + `3PM` + FTM + OREB + DREB + REB + PlusMinus,data = dados_regressaop) 
+modelop5
+coef(modelop5)
+anova(modelop5) 
+summary(modelop5) #Adjusted R-squared: 0.7468  e os que deram não significantes foram os que não estavam significantes com 10%.
+
+###### backward selection #####
+#Selecão das variáveis para compor o modelo, mas precisa depois fazer os teste de resíduo
+completop = lm(WINP ~ ., data = dados_regressaop)
+vaziop = lm(WINP ~ 1, data = dados_regressaop)
+step(completop, scope=list(upper=completop, lower=vaziop), direction='backward', trace=TRUE)
+
+# Coefficients:
+#   (Intercept)          PTS          FGM        `3PM`          FTM  
+# 0.196477               0.269215    -0.539644    -0.270392    -0.272894  
+# FT_P         OREB         DREB          REB           PF  
+# 0.002872    -0.256336    -0.252691     0.256559    -0.006153  
+# PFD          PlusMinus  
+# 0.008881     0.025024  
+
+modelo_backp <- lm(WINP ~ PTS + FGM + `3PM` + FTM + FTP + OREB +  DREB +  REB+ PF + PFD + PlusMinus, data = dados_regressaop)
+modelo_backp
+coef(modelo_backp)
+anova(modelo_backp)
+summary(modelo_backp) #Adjusted R-squared: 0.7494
+
+#### Backward mas com PTS, FGM, `3PM`, FTM e PlusMinus que não deu significante no summary ######
+modelo_backp1 <- lm(WINP ~ PTS + FGM + `3PM` + FTM + PlusMinus, data = dados_regressaop)
+modelo_backp1
+coef(modelo_backp1)
+anova(modelo_backp1)
+summary(modelo_backp1) #Adjusted R-squared:  0.7442
+
+#### Forward Selection ########
+completop = lm(WINP ~ ., data = dados_regressaop)
+vaziop = lm(WINP ~ 1, data = dados_regressaop)
+step(vaziop, scope=list(upper=completop, lower=vaziop), direction='forward', trace=TRUE)
+# Coefficients:
+#   (Intercept)   PlusMinus         DREB  
+# 0.345213     0.025682     0.004033 
+
+modelo_forwp <- lm(formula = WINP ~ PlusMinus + DREB, data = dados_regressaop)
+modelo_forwp
+coef(modelo_forwp)
+anova(modelo_forwp)
+summary(modelo_forwp) #Adjusted R-squared:  0.7406 
+
+############## Anova ###############
+modelop1 
+modelop2 #PTS + FGM + `3PM` + FTM + PlusMinus
+modelop3#PTS + `3PM` + FTM + PlusMinus
+modelop4 #PTS + FGM + `3PM` + FTM + OREB + DREB + REB + PF + PlusMinus
+modelop5 #PTS + FGM + `3PM` + FTM + OREB + DREB + REB + PlusMinus
+modelo_backp # PTS + FGM + `3PM` + FTM + FTP + OREB + DREB +REB + PF + PFD + PlusMinus
+modelo_forwp #PlusMinus + DREB
+modelo_plus <-lm(WINP ~ PlusMinus, data = dados_regressaop)
+modelo_pts <- lm(WINP ~ PTS + DREB + PlusMinus, data = dados_regressaop)
+modelo_ftm <- lm(WINP ~ FTM + DREB + PlusMinus, data = dados_regressaop)
+modelo_pfd <- lm(WINP ~ PFD + DREB + PlusMinus, data = dados_regressaop)
+modelo_pf <- lm(WINP ~ PF + DREB + PlusMinus, data = dados_regressaop)
+modelo_reb <- lm(WINP ~ REB + DREB + PlusMinus, data = dados_regressaop)
+modelo_oreb <- lm(WINP ~ OREB + DREB + PlusMinus, data = dados_regressaop)
+modelo_ftp <- lm(WINP ~ FTP + DREB + PlusMinus, data = dados_regressaop)
+modelo_3pm <- lm(WINP ~ `3PM` + DREB + PlusMinus, data = dados_regressaop)
+modelo_fgm <- lm(WINP ~ FGM + DREB + PlusMinus, data = dados_regressaop)
+
+anova(modelo_plus, modelo_forwp) #0.09805
+#Isto significa que adicionar DREB ao modelo levou a um ajuste significativamente 
+#melhor em relação ao modelo simples.
+anova(modelo_forwp, modelo_pts)#0.6013 PTS não foi significativo
+anova(modelo_forwp, modelo_ftm)#0.8144 FTM deu não significativo
+anova(modelo_forwp, modelo_pfd)#0.819, PFD não sinificativo
+anova(modelo_forwp, modelo_pf)#0.2566, PF não sinificativo
+anova(modelo_forwp, modelo_reb)#0.8461, REB não sinificativo
+anova(modelo_forwp, modelo_oreb)#0.812, OREB não sinificativo
+anova(modelo_forwp, modelo_ftp)#0.1639, FTP não sinificativo
+anova(modelo_forwp, modelo_3pm)#0.7416, 3PM não sinificativo
+anova(modelo_forwp, modelo_fgm)#0.4791, FGM não sinificativo
+
+#melhor modelo é o modelo_forwp com PlusMinus e DREB
+
+############## Análise de resíduos ############
+
+####### Modelo completo ########
+plot(modelop1, which = 1)
+plot(modelop1, which = 2)
+plot(modelop1, which = 3)
+plot(modelop1, which = 4)
+plot(modelop1, which = 5)
+plot(modelop1, which = 6)
+shapiro.test(modelop1$residuals) #p-value = 0.001294, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelop1) #p-value = 0.1243
+#Independência
+plot(modelop1$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelop1$fitted.values, modelop1$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelop1) #p-value = 0.004251, heterocedasticidade
+
+
+###### Modelo 2 #######
+plot(modelop2, which = 1)
+plot(modelop2, which = 2)
+plot(modelop2, which = 3)
+plot(modelop2, which = 4)
+plot(modelop2, which = 5)
+plot(modelop2, which = 6)
+shapiro.test(modelop2$residuals) #p-value = 1.682e-05, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelop2) #p-value = 
+#Independência
+plot(modelop2$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelop2$fitted.values, modelop3$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelop2) #p-value = 
+
+###### Modelo 3 #######
+plot(modelop3, which = 1)
+plot(modelop3, which = 2)
+plot(modelop3, which = 3)
+plot(modelop3, which = 4)
+plot(modelop3, which = 5)
+plot(modelop3, which = 6)
+shapiro.test(modelop3$residuals) #p-value = 1.682e-05, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelop3) #p-value = 0.07474
+#Independência
+plot(modelop3$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelop3$fitted.values, modelop3$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelop3) #p-value = 0.001571, heterocedasticidade
+
+###### Modelo 4 #######
+plot(modelop4, which = 1)
+plot(modelop4, which = 2)
+plot(modelop4, which = 3)
+plot(modelop4, which = 4)
+plot(modelop4, which = 5)
+plot(modelop4, which = 6)
+shapiro.test(modelop4$residuals) #p-value = 1.682e-05, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelop4) #p-value = 0.07474
+#Independência
+plot(modelop4$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelop4$fitted.values, modelop4$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelop4) #p-value = 0.001571, heterocedasticidade
+
+###### Modelo 5 #######
+plot(modelop5, which = 1)
+plot(modelop5, which = 2)
+plot(modelop5, which = 3)
+plot(modelop5, which = 4)
+plot(modelop5, which = 5)
+plot(modelop5, which = 6)
+shapiro.test(modelop5$residuals) #p-value = 1.682e-05, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelop5) #p-value = 0.07474
+#Independência
+plot(modelop5$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelop5$fitted.values, modelop5$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelop5) #p-value = 
+#### Backward ##########
+plot(modelo_backp, which = 1)
+plot(modelo_backp, which = 2)
+plot(modelo_backp, which = 3)
+plot(modelo_backp, which = 4)
+plot(modelo_backp, which = 5)
+plot(modelo_backp, which = 6)
+shapiro.test(modelo_backp$residuals) #p-value = 0.002993,não normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_backp) #p-value = 0.07689
+#Independência
+plot(modelo_backp$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_backp$fitted.values, modelo_backp$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_backp) #p-value = 0.002445, heterocedasticidade
+
+#### Backward 5% ##########
+plot(modelo_backp1, which = 1)
+plot(modelo_backp1, which = 2)
+plot(modelo_backp1, which = 3)
+plot(modelo_backp1, which = 4)
+plot(modelo_backp1, which = 5)
+plot(modelo_backp1, which = 6)
+shapiro.test(modelo_backp1$residuals) #p-value = 0.002993,não normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_backp1) #p-value = 0.07689
+#Independência
+plot(modelo_backp1$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_backp1$fitted.values, modelo_backp1$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_backp1) #p-value = 0.002445, heterocedasticidade
+#### Forward ######
+plot(modelo_forwp, which = 1)
+plot(modelo_forwp, which = 2)
+plot(modelo_forwp, which = 3)
+plot(modelo_forwp, which = 4)
+plot(modelo_forwp, which = 5)
+plot(modelo_forwp, which = 6)
+shapiro.test(modelo_forwp$residuals) #p-value = 0.1997, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(modelo_forwp) #p-value = 0.07378
+#Independência
+plot(modelo_forwp$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(modelo_forwp$fitted.values, modelo_forwp$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(modelo_forwp) #p-value = 1.981e-05, heterocedasticidade
+
+```
