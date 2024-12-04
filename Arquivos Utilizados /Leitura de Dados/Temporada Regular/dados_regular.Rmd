@@ -1,0 +1,62 @@
+---
+title: "Dados Regular"
+output:
+  html_document: default
+  pdf_document: default
+date: "2024-05-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+############ Pacotes que irei utilizar ##################
+library(ggplot2)
+library(tidyverse)
+library(patchwork)
+library(ggplot2)
+library(dplyr)
+library(betareg)
+library(gamlss)
+library(car)
+library(lmtest)
+######### Leitura dos dados ########################
+dados_r <- readxl::read_xlsx("Temporada_NBA.xlsx", sheet = "Regular") #Temporada regular
+
+dados_regular <- dados_r %>% mutate(Posicao = as.integer(Posicao)) %>% 
+  mutate(TEAM = as.factor(TEAM)) %>% 
+  mutate(W = as.integer(W)) %>% 
+  mutate(L = as.integer(L)) %>% 
+  mutate(WINP = as.double(WINP)) %>% 
+  mutate(MIN = as.double(MIN)) %>% 
+  mutate(PTS = as.double(PTS)) %>% 
+  mutate(FGM = as.double(FGM)) %>% 
+  mutate(FGA = as.double(FGA)) %>% 
+  mutate(FGP = as.double(FGP)) %>% 
+  mutate(`3PM` = as.double(`3PM`)) %>% 
+  mutate(`3PA` = as.double(`3PA`)) %>% 
+  mutate(`3PP` = as.double(`3PP`)) %>% 
+  mutate(FTM = as.double(FTM)) %>% 
+  mutate(FTA = as.double(FTA)) %>% 
+  mutate(FTP = as.double(FTP)) %>% 
+  mutate(OREB = as.double(OREB)) %>% 
+  mutate(DREB = as.double(DREB)) %>% 
+  mutate(REB = as.double(REB)) %>% 
+  mutate(AST = as.double(AST)) %>% 
+  mutate(TOV = as.double(TOV)) %>% 
+  mutate(STL = as.double(STL)) %>% 
+  mutate(BLK = as.double(BLK)) %>% 
+  mutate(BLKA = as.double(BLKA)) %>% 
+  mutate(PF = as.double(PF)) %>% 
+  mutate(PFD = as.double(PFD)) %>% 
+  mutate(PlusMinus = as.double(PlusMinus)) %>% 
+  mutate(Temporada = as.character(Temporada)) %>% 
+  mutate(Conferencia = as.character(Conferencia)) %>% 
+  mutate(Numero_temporada = as.factor(Numero_temporada))
+
+######### Dados Regressão ########
+dados_regressao <- dados_regular %>% dplyr::select(-c(Posicao, GP, W, L, MIN, Temporada, Conferencia))
+dados_regressao
+```
