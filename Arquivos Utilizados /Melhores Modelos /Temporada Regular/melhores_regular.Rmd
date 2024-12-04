@@ -1,0 +1,360 @@
+---
+title: "Melhores Regular"
+output:
+  html_document: default
+  pdf_document: default
+date: "2024-05-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+source("dados_regular.R")
+
+########## Regressão linear ########
+regressao_linear <- lm(WINP ~ TEAM + PF + FGP + FGM + PlusMinus, data = dados_regressao)
+regressao_linear
+coef(regressao_linear)
+anova(regressao_linear)
+summary(regressao_linear) #Adjusted R-squared:  0.9344
+AIC(regressao_linear) #-1645.353
+###Resíduos ###
+plot(regressao_linear, which = 1)
+plot(regressao_linear, which = 2)
+plot(regressao_linear, which = 3)
+plot(regressao_linear, which = 4)
+plot(regressao_linear, which = 5)
+plot(regressao_linear, which = 6)
+shapiro.test(regressao_linear$residuals) #p-value = 0.2669, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(regressao_linear) #p-value = 0.1735
+#Independência
+plot(regressao_linear$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(regressao_linear$fitted.values, regressao_linear$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(regressao_linear) #p-value = 0.0006407, heterocedasticidade
+#QQ Plot
+library(hnp)
+hnp(regressao_linear)
+
+########## Regressão beta ########
+######## Logito ##########
+#Melhor modelo logito é o modelo com `3PP` + PF + PlusMinus que é modelo_beta12_3.
+beta_logito <- betareg(WINP ~ TEAM + FGP + FGA + `3PP` + PF + PlusMinus, data = dados_regressao)
+beta_logito
+summary(beta_logito) #Pseudo R-squared: 0.9351
+coef(beta_logito)
+car::Anova(beta_logito)
+########Resíduos Logito ###
+plot(beta_logito, which = 1, type = "pearson")
+plot(beta_logito, which = 2, type = "pearson")
+plot(beta_logito, which = 3, type = "pearson")
+plot(beta_logito, which = 4, type = "pearson")
+plot(beta_logito, which = 5, type = "deviance", sub.caption = "")
+plot(beta_logito, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(beta_logito$residuals) #p-value = 0.5895, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(beta_logito) #p-value = 0.2889
+#Independência
+plot(beta_logito$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(beta_logito$fitted.values, beta_logito$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(beta_logito) #p-value = 0.03674, heterocedasticidade
+
+######## Loglog ##########
+#Melhor modelo de loglog é o modelo modelo_beta21 com STL + PF + PlusMinus;
+beta_loglog <- betareg(WINP ~ TEAM + PF + OREB + FGP + PlusMinus,data = dados_regressao, link = "loglog") #Regressão com todos os dados do modelo
+beta_loglog
+summary(beta_loglog) #Pseudo R-squared: 0.9229
+coef(beta_loglog)
+car::Anova(beta_loglog)
+#### Resíduos loglog ##
+plot(beta_loglog, which = 1, type = "pearson")
+plot(beta_loglog, which = 2, type = "pearson")
+plot(beta_loglog, which = 3, type = "pearson")
+plot(beta_loglog, which = 4, type = "pearson")
+plot(beta_loglog, which = 5, type = "deviance", sub.caption = "")
+plot(beta_loglog, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(beta_loglog$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(beta_loglog) #p-value = 
+#Independência
+plot(beta_loglog$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(beta_loglog$fitted.values, beta_loglog$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(beta_loglog) #p-value =
+######## Probito ##########
+#Melhor modelo de probito é modelo_beta_probit2 com `3PP` + TOV + STL + PF + PlusMinus;
+beta_probito <- betareg(WINP ~ TEAM + PF + FGP + PlusMinus,data = dados_regressao, link = "probit")
+beta_probito
+summary(beta_probito) #Pseudo R-squared: 0.9331
+coef(beta_probito)
+car::Anova(beta_probito)
+### Resíduos Probito ###
+plot(beta_probito, which = 1, type = "pearson")
+plot(beta_probito, which = 2, type = "pearson")
+plot(beta_probito, which = 3, type = "pearson")
+plot(beta_probito, which = 4, type = "pearson")
+plot(beta_probito, which = 5, type = "deviance", sub.caption = "")
+plot(beta_probito, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(beta_probito$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(beta_probito) #p-value = 
+#Independência
+plot(beta_probito$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(beta_probito$fitted.values, beta_probito$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(beta_probito) #p-value = 
+######## cloglog ##########
+#melhor modelo é modelo_beta_cloglog_1 com TOV + PlusMinus
+beta_cloglog <- betareg(WINP ~ TEAM + TOV + FGA + FGM + PlusMinus,data = dados_regressao, link = "cloglog")
+beta_cloglog
+summary(beta_cloglog) #Pseudo R-squared: 0.9286
+coef(beta_cloglog)
+car::Anova(beta_cloglog)
+#Resíduos cloglog
+plot(beta_cloglog, which = 1, type = "pearson")
+plot(beta_cloglog, which = 2, type = "pearson")
+plot(beta_cloglog, which = 3, type = "pearson")
+plot(beta_cloglog, which = 4, type = "pearson")
+plot(beta_cloglog, which = 5, type = "deviance", sub.caption = "")
+plot(beta_cloglog, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(beta_cloglog$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(beta_cloglog) #p-value = 
+#Independência
+plot(beta_cloglog$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(beta_cloglog$fitted.values, beta_cloglog$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(beta_cloglog) #p-value = 
+
+######## cauchito ##########
+beta_cauchit <- betareg(WINP ~ PF + FGA + FGM + PlusMinus,data = dados_regressao, link = "cauchit")
+beta_cauchit
+summary(beta_cauchit) #Pseudo R-squared: 0.8985
+coef(beta_cauchit)
+car::Anova(beta_cauchit)
+#Resíduos
+plot(beta_cauchit, which = 1, type = "pearson")
+plot(beta_cauchit, which = 2, type = "pearson")
+plot(beta_cauchit, which = 3, type = "pearson")
+plot(beta_cauchit, which = 4, type = "pearson")
+plot(beta_cauchit, which = 5, type = "deviance", sub.caption = "")
+plot(beta_cauchit, which = 1, type = "deviance", sub.caption = "")
+shapiro.test(beta_cauchit$residuals) #p-value = 
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(beta_cauchit) #p-value = 
+#Independência
+plot(beta_cauchit$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Homocedasticidade
+plot(beta_cauchit$fitted.values, beta_cauchit$residuals, 
+     xlab = "Valores Ajustados",
+     ylab = "Residuos",
+     pch = 19,
+     main = "Suposição de homocedasticidade"
+)
+#Breusch_Pagan para homocedasticdade
+bptest(beta_cauchit) #p-value =
+########## GAMLSS ########  
+####### Beta #####
+gamlss_beta <- gamlss(formula = WINP ~ PlusMinus + FGP + PTS + PF + TEAM, family = BE, data = dados_regressao)
+gamlss_beta
+coef(gamlss_beta)
+summary(gamlss_beta) #AIC:     -1664.843
+##### Resíduos ###
+plot(gamlss_beta)
+shapiro.test(gamlss_beta$residuals) #p-value = 0.2853, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(gamlss_beta) #p-value = 0.1735
+#Independência
+plot(gamlss_beta$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Breusch_Pagan para homocedasticdade
+bptest(gamlss_beta) #p-value = 0.0006407
+
+######## Normal ##########
+#Mesma que a linear então não iremos utilizar
+gamlss_normal <- gamlss(formula = WINP ~ PlusMinus + PF + FGP + FGM + TEAM, family = NO, data = dados_regressao) 
+gamlss_normal
+coef(gamlss_normal)
+summary(gamlss_normal) #-1646.44
+#Resíduos forw
+plot(gamlss_normal)
+shapiro.test(gamlss_normal$residuals) #p-value = 0.2296, normal
+#Teste de durbin watson para independencia
+library(lmtest)
+dwtest(gamlss_normal) #p-value =  0.195
+#Independência
+plot(gamlss_normal$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Breusch_Pagan para homocedasticdade
+bptest(gamlss_normal) #p-value = 0.001575
+
+########## Modelos Mistos ######## 
+##### Normal TEAM #####
+library(lme4)
+misto_normal_team <- lmer(formula = WINP ~ PlusMinus + OREB + PF + `3PA` + (1|TEAM), data = dados_regressao)
+misto_normal_team
+coef(misto_normal_team)
+summary(misto_normal_team) #AIC:
+anova(misto_normal_team)
+AIC(misto_normal_team)
+#Resíduos
+plot(misto_normal_team)
+###Resíduos ###
+## 1) gráfico quantil-quantil (normalidade)
+#qqmath(misto_normal_team,id=0.05) 
+#QQ Plot
+library(hnp)
+hnp(misto_normal_team)
+## 2) gráfico de valores ajustados x resíduos (homocedasticidade)
+plot(misto_normal_team,type=c("p","smooth")) 
+## 3) gráfico de valores ajustados x resíduos padronizados (homocedasticidade)
+plot(misto_normal_team,sqrt(abs(resid(.)))~fitted(.), type=c("p","smooth"))
+
+library(RVAideMemoire)
+plotresid(misto_normal_team, shapiro = T)
+
+######Normal Temporada #####
+library(lme4)
+misto_normal_temp <- lmer(formula = WINP ~ PlusMinus + FGP + PF + FGM + TEAM + (1|Numero_temporada), data = dados_regressao)
+misto_normal_temp
+coef(misto_normal_temp)
+summary(misto_normal_temp) #AIC:
+anova(misto_normal_temp)
+AIC(misto_normal_temp)
+#Resíduos
+plot(misto_normal_temp)
+###Resíduos ###
+## 1) gráfico quantil-quantil (normalidade)
+#qqmath(misto_normal_temp,id=0.05) 
+#QQ Plot
+library(hnp)
+hnp(misto_normal_temp)
+## 2) gráfico de valores ajustados x resíduos (homocedasticidade)
+plot(misto_normal_temp,type=c("p","smooth")) 
+## 3) gráfico de valores ajustados x resíduos padronizados (homocedasticidade)
+plot(misto_normal_temp,sqrt(abs(resid(.)))~fitted(.), type=c("p","smooth"))
+
+library(RVAideMemoire)
+plotresid(misto_normal_temp, shapiro = T)
+
+###### Beta Team ####
+misto_beta_team <- gamlss(formula = WINP ~ (re(random = ~1 | TEAM)) +  
+                            PlusMinus + FGP + PTS + PF, family = BE, data = dados_regressao) 
+misto_beta_team
+coef(misto_beta_team)
+summary(misto_beta_team) #AIC:
+getSmo(misto_beta_team)
+#Resíduos
+plot(misto_beta_team)
+shapiro.test(misto_beta_team$residuals) #p-value =  normal
+#Independência
+plot(misto_beta_team$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Breusch_Pagan para homocedasticdade
+bptest(misto_beta_team) #p-value = 
+
+#####  Beta Temporada #####
+misto_beta_temp <- gamlss(formula = WINP ~ (re(random = ~1 | Numero_temporada)) +  
+         PlusMinus + PF + FGP + FGA, family = BE, data = dados_regressao) 
+misto_beta_temp
+coef(misto_beta_temp)
+summary(misto_beta_temp) #AIC:
+getSmo(misto_beta_temp)
+#Resíduos
+plot(misto_beta_temp)
+shapiro.test(misto_beta_temp$residuals) #p-value =  normal
+#Independência
+plot(misto_beta_temp$residuals,
+     ylab = "Residuos",
+     xlab = "Index dos Imovéis", 
+     main = "Suposição de independência",
+     pch = 19)
+
+#Breusch_Pagan para homocedasticdade
+bptest(misto_beta_temp) #p-value = 
+```
+
